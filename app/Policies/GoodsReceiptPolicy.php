@@ -12,7 +12,7 @@ class GoodsReceiptPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin();
     }
 
     /**
@@ -20,7 +20,7 @@ class GoodsReceiptPolicy
      */
     public function view(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin();
     }
 
     /**
@@ -28,7 +28,7 @@ class GoodsReceiptPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin();
     }
 
     /**
@@ -36,7 +36,7 @@ class GoodsReceiptPolicy
      */
     public function update(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin() && ($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING);
     }
 
     /**
@@ -44,7 +44,9 @@ class GoodsReceiptPolicy
      */
     public function delete(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return true;
+        return $user->isChecker()
+        || $user->isAdmin()
+        && (($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING));
     }
 
     /**
@@ -52,7 +54,7 @@ class GoodsReceiptPolicy
      */
     public function restore(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin();
     }
 
     /**
@@ -60,6 +62,6 @@ class GoodsReceiptPolicy
      */
     public function forceDelete(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return true;
+        return $user->isChecker() || $user->isAdmin() && ($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING && $goodReceipt->status === \App\Enums\GoodsReceiptStatus::COMPLETED);
     }
 }

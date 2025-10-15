@@ -53,8 +53,7 @@ class CreatePurchaseOrder extends CreateRecord
             ->success()
             ->title('Purchase Order Created')
             ->body("PO {$this->record->po_number} has been created successfully.")
-            ->send()
-            ->sendToDatabase($this->record->supplier->user);
+            ->send();
     }
 
     protected function getSteps(): array

@@ -173,7 +173,7 @@ class PurchaseOrder extends Model
             ->title('Purchase Order Status Updated')
             ->body("Purchase Order {$this->po_number} status has been updated to {$this->status->value}.")
             ->info()
-            ->sendToDatabase($this->supplier->user);
+            ->sendToDatabase($this->supplier->users);
     }
 
     public function markAsCancelled(): void
@@ -185,7 +185,7 @@ class PurchaseOrder extends Model
             ->title('Purchase Order Cancelled')
             ->body("Purchase Order {$this->po_number} has been cancelled.")
             ->danger()
-            ->sendToDatabase($this->supplier->user);
+            ->sendToDatabase($this->supplier->users);
     }
 
     // Boot method

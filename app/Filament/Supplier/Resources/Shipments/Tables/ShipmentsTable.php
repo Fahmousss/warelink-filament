@@ -195,7 +195,7 @@ class ShipmentsTable
                             'shipment_id' => $record->id,
                             'purchase_order_id' => $record->purchase_order_id,
                         ]))
-                        ->visible(fn ($record) => $record->isArrived() && ! $record->isProcessed()),
+                        ->visible(fn ($record) => $record->isArrived() && ! $record->isProcessed() && auth()->user()->can('create', \App\Models\GoodsReceipt::class)),
 
                     EditAction::make()
                         ->icon('heroicon-m-pencil-square')

@@ -12,7 +12,7 @@ class PurchaseOrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isAdmin() || $user->isChecker() || $user->isSupplier();
     }
 
     /**
@@ -20,7 +20,7 @@ class PurchaseOrderPolicy
      */
     public function view(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return $user->isAdmin() || $user->isChecker() || ($user->isSupplier() && $purchaseOrder->supplier_id === $user->supplier_id);
     }
 
     /**
@@ -28,7 +28,7 @@ class PurchaseOrderPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->isAdmin() || $user->isChecker();
     }
 
     /**
@@ -36,7 +36,7 @@ class PurchaseOrderPolicy
      */
     public function update(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return ($user->isAdmin() || $user->isChecker()) && ($purchaseOrder->status === \App\Enums\PurchaseOrderStatus::PENDING);
     }
 
     /**
@@ -44,7 +44,7 @@ class PurchaseOrderPolicy
      */
     public function delete(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return ($user->isAdmin() || $user->isChecker()) && ($purchaseOrder->status === \App\Enums\PurchaseOrderStatus::PENDING);
     }
 
     /**
@@ -52,7 +52,7 @@ class PurchaseOrderPolicy
      */
     public function restore(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return $user->isAdmin() || $user->isChecker();
     }
 
     /**
@@ -60,6 +60,6 @@ class PurchaseOrderPolicy
      */
     public function forceDelete(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return true;
+        return ($user->isAdmin() || $user->isChecker()) && ($purchaseOrder->status === \App\Enums\PurchaseOrderStatus::PENDING);
     }
 }

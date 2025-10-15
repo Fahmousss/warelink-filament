@@ -40,6 +40,7 @@ class AppPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\Filament\App\Resources')
+            ->discoverResources(in: app_path('Filament/Supplier/Resources/Shipments'), for: 'App\Filament\Supplier\Resources\Shipments')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\Filament\App\Pages')
             ->pages([
                 Dashboard::class,

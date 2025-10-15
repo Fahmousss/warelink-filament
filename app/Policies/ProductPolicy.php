@@ -12,7 +12,7 @@ class ProductPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isChecker();
+        return $user->isAdmin() || $user->isChecker() || $user->isSupplier();
     }
 
     /**
@@ -20,7 +20,7 @@ class ProductPolicy
      */
     public function view(User $user, Product $product): bool
     {
-        return $user->isAdmin() || $user->isChecker();
+        return $user->isAdmin() || $user->isChecker() || ($user->isSupplier() && $product->supplier_id === $user->supplier_id);
     }
 
     /**

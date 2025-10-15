@@ -168,7 +168,7 @@ class GoodsReceipt extends Model
             ->body("Goods Receipt {$this->grn_number} has been completed.")
             ->success()
             ->icon('heroicon-o-archive')
-            ->sendToDatabase($this->purchaseOrder->supplier->user);
+            ->sendToDatabase($this->purchaseOrder->supplier->users);
     }
 
     // Boot method
