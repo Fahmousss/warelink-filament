@@ -1,0 +1,160 @@
+<?php
+
+// declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\ShipmentStatus;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Shipment extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'shipment_number',
+        'purchase_order_id',
+        'supplier_id',
+        'delivery_order_number',
+        'shipping_date',
+        'estimated_arrival_date',
+        'status',
+        'do_scan_path',
+        'notes',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'shipping_date' => 'date',
+            'estimated_arrival_date' => 'date',
+            'status' => ShipmentStatus::class,
+        ];
+    }
+
+    // ==========================================
+    // RELATIONSHIPS
+    // ==========================================
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(ShipmentDetail::class);
+    }
+
+    // ==========================================
+    // STATUS CHECKING METHODS
+    // ==========================================
+
+    public function isDraft(): bool
+    {
+        return $this->status === ShipmentStatus::DRAFT;
+    }
+
+    public function isShipped(): bool
+    {
+        return $this->status === ShipmentStatus::SHIPPED;
+    }
+
+    public function isArrived(): bool
+    {
+        return $this->status === ShipmentStatus::ARRIVED;
+    }
+
+    public function isProcessed(): bool
+    {
+        return $this->status === ShipmentStatus::PROCESSED;
+    }
+
+    // ==========================================
+    // STATUS TRANSITION METHODS
+    // ==========================================
+
+    public function markAsShipped(): void
+    {
+        $this->update(['status' => ShipmentStatus::SHIPPED]);
+    }
+
+    public function markAsArrived(): void
+    {
+        $this->update(['status' => ShipmentStatus::ARRIVED]);
+    }
+
+    public function markAsProcessed(): void
+    {
+        $this->update(['status' => ShipmentStatus::PROCESSED]);
+    }
+
+    // ==========================================
+    // ATTRIBUTES
+    // ==========================================
+
+    protected function totalQuantityShipped(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->details->sum('quantity_shipped'),
+        );
+    }
+
+    protected function totalItems(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->details->count(),
+        );
+    }
+
+    protected function isEditable(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->status === ShipmentStatus::DRAFT,
+        );
+    }
+
+    protected function canBeShipped(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->status === ShipmentStatus::DRAFT && $this->details->count() > 0,
+        );
+    }
+
+    // ==========================================
+    // BOOT METHOD
+    // ==========================================
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Shipment $shipment): void {
+            if (empty($shipment->shipment_number)) {
+                $shipment->shipment_number = self::generateShipmentNumber();
+            }
+
+            if ($shipment->status === null) {
+                $shipment->status = ShipmentStatus::DRAFT;
+            }
+        });
+    }
+
+    protected static function generateShipmentNumber(): string
+    {
+        $date = now()->format('Ymd');
+        $count = self::whereDate('created_at', now())->count() + 1;
+
+        return 'ASN-'.$date.'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+    }
+}
