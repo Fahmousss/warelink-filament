@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\GoodsReceiptStatus;
+use App\Enums\UserRole;
 use App\Policies\GoodsReceiptPolicy;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +25,7 @@ class GoodsReceipt extends Model
     protected $fillable = [
         'grn_number',
         'purchase_order_id',
+        'shipment_id',
         'delivery_order_number',
         'receipt_date',
         'received_by',
@@ -40,6 +43,11 @@ class GoodsReceipt extends Model
     }
 
     // Relationships
+    public function shipment(): BelongsTo
+    {
+        return $this->belongsTo(Shipment::class);
+    }
+
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
@@ -116,6 +124,14 @@ class GoodsReceipt extends Model
     public function markAsVerified(): void
     {
         $this->update(['status' => GoodsReceiptStatus::VERIFIED]);
+
+        // send notification to accounting that GRN has been verified
+        Notification::make()
+            ->title('Goods Receipt Verified')
+            ->body("Goods Receipt {$this->grn_number} has been verified and is pending completion.")
+            ->success()
+            ->icon('heroicon-o-check-circle')
+            ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Accounting)->get());
     }
 
     public function markAsCompleted(): void
@@ -142,6 +158,17 @@ class GoodsReceipt extends Model
 
         // Update PO status
         $this->purchaseOrder->updateStatus();
+
+        if ($this->shipment_id) {
+            $this->shipment->markAsProcessed();
+        }
+        // send notification to supplier that GRN has been completed
+        Notification::make()
+            ->title('Goods Receipt Completed')
+            ->body("Goods Receipt {$this->grn_number} has been completed.")
+            ->success()
+            ->icon('heroicon-o-archive')
+            ->sendToDatabase($this->purchaseOrder->supplier->user);
     }
 
     // Boot method

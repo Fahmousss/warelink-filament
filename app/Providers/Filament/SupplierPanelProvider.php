@@ -2,9 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\App\Pages\Auth\EditProfile;
-use Filament\Actions\Action;
-use Filament\Facades\Filament;
+use App\Models\Supplier;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -15,7 +13,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
-use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -25,26 +22,26 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class AppPanelProvider extends PanelProvider
+class SupplierPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('app')
-            ->path('')
-            ->profile(page: EditProfile::class, isSimple: false)
+            ->id('supplier')
+            ->path('supplier')
             ->login()
             ->passwordReset()
             ->emailVerification(isRequired: env('APP_ENV') === 'production')
             ->colors([
                 'primary' => Color::Blue,
             ])
-            ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\Filament\App\Resources')
-            ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\Filament\App\Pages')
+            ->discoverResources(in: app_path('Filament/Supplier/Resources'), for: 'App\Filament\Supplier\Resources')
+            ->discoverResources(in: app_path('Filament/Resources/PurchaseOrders'), for: 'App\Filament\Resources\PurchaseOrders')
+            ->discoverPages(in: app_path('Filament/Supplier/Pages'), for: 'App\Filament\Supplier\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Supplier/Widgets'), for: 'App\Filament\Supplier\Widgets')
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
@@ -64,19 +61,8 @@ class AppPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->databaseNotifications()
-            ->userMenuItems([
-                Action::make('admin')
-                    ->label('Admin Panel')
-                    ->url(fn (): string => Filament::getPanel('admin')->getUrl())
-                    ->icon('heroicon-o-shield-check')
-                    ->visible(fn (): bool => auth()->user()->canAccessPanel(Filament::getPanel('admin'))),
-            ])
-            ->renderHook(
-                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn () => view('filament.app.auth.login-form-before'),
-            )
-            ->brandLogo(fn () => view('filament.app.logo'))
-            ->darkModeBrandLogo(fn () => view('filament.app.dark-logo'))
+            ->brandLogo(fn () => view('filament.supplier.logo'))
+            ->darkModeBrandLogo(fn () => view('filament.supplier.dark-logo'))
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
             ->topbar(false)
@@ -90,6 +76,7 @@ class AppPanelProvider extends PanelProvider
                 title: 'Record not found',
                 body: 'A record you are looking for does not exist.',
                 statusCode: 404,
-            )->viteTheme('resources/css/filament/admin/theme.css');
+            )->viteTheme('resources/css/filament/admin/theme.css')
+            ->tenant(Supplier::class, slugAttribute: 'code');
     }
 }

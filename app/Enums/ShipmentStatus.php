@@ -3,9 +3,10 @@
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum ShipmentStatus: string implements HasColor, HasLabel
+enum ShipmentStatus: string implements HasColor, HasIcon, HasLabel
 {
     case DRAFT = 'Draft';
     case SHIPPED = 'Shipped';

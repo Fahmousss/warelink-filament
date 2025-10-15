@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 class ProductForm
@@ -36,6 +37,22 @@ class ProductForm
                                     ->prefixIcon('heroicon-m-hashtag')
                                     ->autocomplete('off')
                                     ->helperText('Unique identifier for this product. Will be generated automatically')
+                                    ->columnSpan([
+                                        'sm' => 2,
+                                        'md' => 1,
+                                    ]),
+
+                                Select::make('supplier_id')
+                                    ->label('Supplier')
+                                    ->relationship('supplier', 'name')
+                                    ->required()
+                                    ->native(false)
+                                    ->preload()
+                                    ->helperText('The supplier associated with this product')
+                                    ->searchable()
+                                    ->prefixIcon('heroicon-m-truck')
+                                    ->getOptionLabelFromRecordUsing(fn (Model $record) => "{$record->name} ({$record->code}). Total Products: {$record->products->count()}")
+                                    ->placeholder('Select a supplier')
                                     ->columnSpan([
                                         'sm' => 2,
                                         'md' => 1,

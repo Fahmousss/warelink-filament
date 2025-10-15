@@ -28,6 +28,7 @@ class Product extends Model
         'stock_quantity',
         'minimum_stock',
         'is_active',
+        'supplier_id',
     ];
 
     protected function casts(): array
@@ -56,6 +57,22 @@ class Product extends Model
     public function goodsReceiptDetails(): HasMany
     {
         return $this->hasMany(GoodsReceiptDetail::class);
+    }
+
+    /**
+     * Get all shipment details for this product
+     */
+    public function shipmentDetails(): HasMany
+    {
+        return $this->hasMany(ShipmentDetail::class);
+    }
+
+    /**
+     * Get the supplier that provides this product
+     */
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     // ==========================================
@@ -107,6 +124,15 @@ class Product extends Model
     {
         $query->whereColumn('stock_quantity', '<=', 'minimum_stock')
             ->where('is_active', true);
+    }
+
+    /**
+     * Scope a query to products by a specific supplier
+     */
+    #[Scope]
+    protected function bySupplier(Builder $query, int $supplierId): void
+    {
+        $query->where('supplier_id', $supplierId);
     }
 
     // ==========================================
@@ -508,7 +534,7 @@ class Product extends Model
         // Auto-generate product code if not provided
         static::creating(function ($product) {
             if (empty($product->product_code)) {
-                $product->product_code = self::generateProductCode();
+                $product->product_code = self::generateProductCode($product->supplier_id);
             }
         });
 
@@ -533,11 +559,12 @@ class Product extends Model
     /**
      * Generate unique product code
      */
-    protected static function generateProductCode(): string
+    protected static function generateProductCode(string $supplier_code): string
     {
         $date = now()->format('Ymd');
         $count = self::whereDate('created_at', now())->count() + 1;
+        $supplier = Supplier::find($supplier_code)->code;
 
-        return 'PROD-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
+        return 'PROD-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT).'-'.$supplier;
     }
 }

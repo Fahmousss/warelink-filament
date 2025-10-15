@@ -13,6 +13,7 @@ use App\Filament\Resources\PurchaseOrders\Schemas\PurchaseOrderInfolist;
 use App\Filament\Resources\PurchaseOrders\Tables\PurchaseOrdersTable;
 use App\Models\PurchaseOrder;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -30,6 +31,15 @@ class PurchaseOrderResource extends Resource
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::ShoppingCart;
 
     protected static string|UnitEnum|null $navigationGroup = 'Procurement';
+
+    public static function isScopedToTenant(): bool
+    {
+        if (Filament::getId() === 'supplier') {
+            return true;
+        }
+
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {

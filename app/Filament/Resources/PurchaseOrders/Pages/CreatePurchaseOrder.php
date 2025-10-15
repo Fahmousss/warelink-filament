@@ -49,12 +49,12 @@ class CreatePurchaseOrder extends CreateRecord
 
     protected function getCreatedNotification(): ?Notification
     {
-
         return Notification::make()
             ->success()
             ->title('Purchase Order Created')
             ->body("PO {$this->record->po_number} has been created successfully.")
-            ->send();
+            ->send()
+            ->sendToDatabase($this->record->supplier->user);
     }
 
     protected function getSteps(): array
@@ -86,18 +86,7 @@ class CreatePurchaseOrder extends CreateRecord
                                         ->required()
                                         ->searchable()
                                         ->preload()
-                                        ->createOptionForm([
-                                            TextInput::make('name')
-                                                ->required()
-                                                ->maxLength(255),
-                                            TextInput::make('code')
-                                                ->required()
-                                                ->unique()
-                                                ->maxLength(50),
-                                            TextInput::make('email')
-                                                ->email(),
-                                            TextInput::make('phone'),
-                                        ])
+                                        ->live()
                                         ->prefixIcon('heroicon-m-building-storefront')
                                         ->helperText('Select the supplier for this purchase order')
                                         ->columnSpan(1),
@@ -117,6 +106,7 @@ class CreatePurchaseOrder extends CreateRecord
                                     DatePicker::make('expected_delivery_date')
                                         ->label('Expected Delivery')
                                         ->native(false)
+                                        ->after('order_date')
                                         ->prefixIcon('heroicon-m-truck')
                                         ->helperText('Expected date of delivery')
                                         ->columnSpan(1),
@@ -157,7 +147,13 @@ class CreatePurchaseOrder extends CreateRecord
                                         ->schema([
                                             Select::make('product_id')
                                                 ->label('Product')
-                                                ->relationship('product', 'name', fn (Builder $query) => $query->active())
+                                                ->relationship('product', 'name', function (Builder $query, Get $get) {
+                                                    $supplierId = $get('../../supplier_id');
+                                                    if (! $supplierId) {
+                                                        return $query->whereRaw('1 = 0');
+                                                    }
+                                                    $query->bySupplier($supplierId)->active();
+                                                })
                                                 ->getOptionLabelFromRecordUsing(fn ($record) => $record->name.' - '.
                                                 $record->stock_status_label.'
                                                 ('.$record->stock_quantity.' '.$record->unit.')'
@@ -167,6 +163,7 @@ class CreatePurchaseOrder extends CreateRecord
                                                 ->preload()
                                                 ->live(onBlur: true)
                                                 ->reactive()
+                                                ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                                 ->afterStateUpdated(function ($state, Set $set) {
                                                     if ($state) {
                                                         $product = Product::find($state);

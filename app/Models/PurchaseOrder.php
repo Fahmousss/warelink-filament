@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PurchaseOrderStatus;
 use App\Policies\PurchaseOrderPolicy;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,6 +41,12 @@ class PurchaseOrder extends Model
     }
 
     // Relationships
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
+    }
+
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
@@ -154,17 +161,31 @@ class PurchaseOrder extends Model
         $totalReceived = $this->total_quantity_received;
 
         if ($totalReceived <= 0) {
-            $this->update(['status' => 'Pending']);
+            $this->update(['status' => PurchaseOrderStatus::PENDING]);
         } elseif ($totalReceived >= $totalOrdered) {
-            $this->update(['status' => 'Completed']);
+            $this->update(['status' => PurchaseOrderStatus::COMPLETED]);
         } else {
-            $this->update(['status' => 'Partial']);
+            $this->update(['status' => PurchaseOrderStatus::PARTIAL]);
         }
+
+        // Optionally, you might want to notify relevant users about the status update
+        Notification::make()
+            ->title('Purchase Order Status Updated')
+            ->body("Purchase Order {$this->po_number} status has been updated to {$this->status->value}.")
+            ->info()
+            ->sendToDatabase($this->supplier->user);
     }
 
     public function markAsCancelled(): void
     {
-        $this->update(['status' => 'Cancelled']);
+        $this->update(['status' => PurchaseOrderStatus::CANCELLED]);
+
+        // Optionally, you might want to notify relevant users about the cancellation
+        Notification::make()
+            ->title('Purchase Order Cancelled')
+            ->body("Purchase Order {$this->po_number} has been cancelled.")
+            ->danger()
+            ->sendToDatabase($this->supplier->user);
     }
 
     // Boot method

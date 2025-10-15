@@ -7,6 +7,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Operation;
 use Illuminate\Support\Facades\Hash;
@@ -74,15 +75,28 @@ class UserForm
                                 Select::make('role')
                                     ->options(\App\Enums\UserRole::class)
                                     ->required()
-                                    ->default('Supplier')
                                     ->native(false)
                                     ->searchable()
                                     ->placeholder('Select a role')
                                     ->helperText('Determines user permissions and access level.')
+                                    ->live()
                                     ->columnSpan([
                                         'sm' => 2,
                                         'md' => 1,
                                     ]),
+                                Select::make('supplier_id')
+                                    ->label('Supplier')
+                                    ->relationship('supplier', 'name', fn ($query) => $query->active())
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->placeholder('Select a supplier')
+                                    ->helperText('Assign the user to a specific supplier.')
+                                    ->columnSpan([
+                                        'sm' => 2,
+                                        'md' => 1,
+                                    ])
+                                    ->visible(fn (Get $get) => $get('role') === \App\Enums\UserRole::Supplier),
                                 Toggle::make('is_active')
                                     ->label('Active')
                                     ->onIcon('heroicon-m-check')

@@ -173,14 +173,23 @@ class ProductInfolist
                                         'md' => 1,
                                     ]),
                             ]),
+                        Grid::make(2)
+                            ->schema([
+                                TextEntry::make('name')
+                                    ->label('Product Name')
+                                    ->icon('heroicon-m-tag')
+                                    ->iconColor('gray')
+                                    ->size(TextSize::Large)
+                                    ->weight('semibold'),
 
-                        TextEntry::make('name')
-                            ->label('Product Name')
-                            ->icon('heroicon-m-tag')
-                            ->iconColor('gray')
-                            ->size(TextSize::Large)
-                            ->weight('semibold')
-                            ->columnSpanFull(),
+                                TextEntry::make('supplier.name')
+                                    ->label('Supplier')
+                                    ->icon('heroicon-m-truck')
+                                    ->iconColor('gray')
+                                    ->placeholder('-')
+                                    ->size(TextSize::Large)
+                                    ->weight('semibold'),
+                            ]),
 
                         TextEntry::make('description')
                             ->label('Description')

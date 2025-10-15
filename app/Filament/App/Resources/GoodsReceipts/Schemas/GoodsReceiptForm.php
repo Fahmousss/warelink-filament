@@ -3,10 +3,12 @@
 namespace App\Filament\App\Resources\GoodsReceipts\Schemas;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\ShipmentStatus;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use Filament\Actions\Action;
 use Filament\Forms\Components as FormComponents;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components;
 use Filament\Schemas\Components\Utilities\Get;
@@ -27,6 +29,31 @@ class GoodsReceiptForm
                     ->schema([
                         Components\Grid::make(2)
                             ->schema([
+                                Select::make('shipment_id')
+                                    ->label('Shipment (ASN)')
+                                    ->relationship(
+                                        'shipment',
+                                        'shipment_number',
+                                        fn ($query) => $query->where('status', ShipmentStatus::ARRIVED)
+                                            ->with(['purchaseOrder', 'supplier'])
+                                    )
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Set $set): void {
+                                        if ($state) {
+                                            $shipment = \App\Models\Shipment::with('purchaseOrder')->find($state);
+                                            if ($shipment) {
+                                                $set('purchase_order_id', $shipment->purchase_order_id);
+                                                $set('delivery_order_number', $shipment->delivery_order_number);
+                                            }
+                                        }
+                                    })
+                                    ->prefixIcon('heroicon-m-truck')
+                                    ->helperText('Select shipment (ASN) to pre-fill information')
+                                    ->columnSpan(1),
+
                                 FormComponents\Select::make('purchase_order_id')
                                     ->label('Purchase Order')
                                     ->relationship('purchaseOrder', 'po_number', fn (Builder $query) => $query
@@ -207,6 +234,7 @@ class GoodsReceiptForm
                                             })
                                             ->required()
                                             ->searchable()
+                                            ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                 if ($state) {

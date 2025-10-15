@@ -6,14 +6,17 @@ namespace App\Models;
 
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 #[UsePolicy(\App\Policies\UserPolicy::class)]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -30,6 +33,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'role',
         'is_active',
+        'supplier_id',
     ];
 
     /**
@@ -58,6 +62,11 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
     public function isActive(): bool
     {
         return $this->is_active;
@@ -83,10 +92,24 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === \App\Enums\UserRole::Supplier;
     }
 
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->supplier_id === $tenant->id;
+    }
+
+    public function getTenants(Panel $panel): array|Collection
+    {
+        return $this->supplier ? collect([$this->supplier]) : collect([]);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
             return $this->isAdmin();
+        }
+
+        if ($panel->getId() === 'supplier') {
+            return $this->isSupplier() && $this->isActive();
         }
 
         return $this->isActive();

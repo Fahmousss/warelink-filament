@@ -67,6 +67,18 @@ class UserInfolist
                                         'md' => 1,
                                     ]),
 
+                                TextEntry::make('supplier.name')
+                                    ->label('Supplier')
+                                    ->icon('heroicon-m-truck')
+                                    ->iconColor('gray')
+                                    ->placeholder('-')
+                                    ->size(TextSize::Large)
+                                    ->weight('bold')
+                                    ->columnSpan([
+                                        'sm' => 2,
+                                        'md' => 1,
+                                    ]),
+
                                 TextEntry::make('email')
                                     ->label('Email address')
                                     ->icon('heroicon-m-envelope')

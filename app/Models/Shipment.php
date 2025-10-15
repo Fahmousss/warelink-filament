@@ -5,6 +5,10 @@
 namespace App\Models;
 
 use App\Enums\ShipmentStatus;
+use App\Enums\UserRole;
+use App\Policies\ShipmentPolicy;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[UsePolicy(ShipmentPolicy::class)]
 class Shipment extends Model
 {
     use HasFactory, SoftDeletes;
@@ -87,16 +92,39 @@ class Shipment extends Model
     public function markAsShipped(): void
     {
         $this->update(['status' => ShipmentStatus::SHIPPED]);
+
+        // Send notification to admin that shipment has been shipped
+        Notification::make()
+            ->title('Shipment Shipped')
+            ->body("Shipment {$this->shipment_number} has been marked as shipped.")
+            ->success()
+            ->icon('heroicon-o-truck')
+            ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
 
     public function markAsArrived(): void
     {
         $this->update(['status' => ShipmentStatus::ARRIVED]);
+        // Send notification to admin that shipment has been shipped
+        Notification::make()
+            ->title('Shipment Arrived')
+            ->body("Shipment {$this->shipment_number} has been marked as arrived.")
+            ->success()
+            ->icon('heroicon-o-check-circle')
+            ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
 
     public function markAsProcessed(): void
     {
         $this->update(['status' => ShipmentStatus::PROCESSED]);
+
+        // Send notification to admin that shipment has been shipped
+        Notification::make()
+            ->title('Shipment Processed')
+            ->body("Shipment {$this->shipment_number} has been marked as processed.")
+            ->info()
+            ->icon('heroicon-o-archive')
+            ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
 
     // ==========================================
