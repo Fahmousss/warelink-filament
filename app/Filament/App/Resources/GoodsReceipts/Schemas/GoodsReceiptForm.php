@@ -6,6 +6,7 @@ use App\Enums\PurchaseOrderStatus;
 use App\Enums\ShipmentStatus;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\Shipment;
 use Filament\Actions\Action;
 use Filament\Forms\Components as FormComponents;
 use Filament\Forms\Components\Select;
@@ -220,12 +221,12 @@ class GoodsReceiptForm
                                         FormComponents\Select::make('product_id')
                                             ->label('Product')
                                             ->options(function (Get $get) {
-                                                $poId = $get('../../purchase_order_id');
+                                                $poId = $get('../../shipment_id');
                                                 if (! $poId) {
                                                     return [];
                                                 }
 
-                                                $po = PurchaseOrder::with('details.product')->find($poId);
+                                                $po = Shipment::with('details.product')->find($poId);
                                                 if (! $po) {
                                                     return [];
                                                 }
@@ -256,6 +257,17 @@ class GoodsReceiptForm
                                                             $set('_quantity_remaining', $detail->quantity_remaining);
                                                         }
                                                     }
+
+                                                    // Get Shipment detail info
+                                                    $shipmentId = $get('../../shipment_id');
+                                                    if ($shipmentId) {
+                                                        $shipment = Shipment::with('details')->find($shipmentId);
+                                                        $detail = $shipment->details->where('product_id', $state)->first();
+                                                        if ($detail) {
+                                                            $set('_quantity_shipped', $detail->quantity_shipped);
+                                                            $set('_notes', $detail->notes);
+                                                        }
+                                                    }
                                                 }
                                             })
                                             ->disabled(fn ($record) => $record !== null)
@@ -282,6 +294,21 @@ class GoodsReceiptForm
                                                 ");
                                             })
                                             ->columnSpan(2),
+
+                                        TextEntry::make('shipment_info')
+                                            ->label('Shipment Info')
+                                            ->state(function (Get $get) {
+                                                $detail = $get('_quantity_shipped') ?? null;
+                                                $notes = $get('_notes') ?? '-';
+
+                                                return new HtmlString("
+                                                    <div class='text-xs space-y-0.5'>
+                                                        <div><strong>Shipped Qty:</strong> {$detail}</div>
+                                                        <div><strong>Note #:</strong> {$notes}</div>
+                                                    </div>
+                                                ");
+                                            })
+                                            ->columnSpan(1),
 
                                         FormComponents\TextInput::make('quantity_received')
                                             ->label('Received')

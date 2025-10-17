@@ -12,6 +12,7 @@ use App\Filament\Supplier\Resources\Shipments\Schemas\ShipmentInfolist;
 use App\Filament\Supplier\Resources\Shipments\Tables\ShipmentsTable;
 use App\Models\Shipment;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -35,6 +36,11 @@ class ShipmentResource extends Resource
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Truck;
 
     protected static ?string $recordTitleAttribute = 'shipment_number';
+
+    public static function isScopedToTenant(): bool
+    {
+        return Filament::getId() === 'supplier';
+    }
 
     public static function getNavigationBadge(): ?string
     {

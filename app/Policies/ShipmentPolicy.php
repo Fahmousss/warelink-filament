@@ -12,7 +12,7 @@ class ShipmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isSupplier() || $user->isChecker() || $user->isAdmin();
     }
 
     /**
@@ -20,7 +20,7 @@ class ShipmentPolicy
      */
     public function view(User $user, Shipment $shipment): bool
     {
-        return true;
+        return $user->isSupplier() && $shipment->supplier_id === $user->supplier_id || ($user->isChecker() || $user->isAdmin());
     }
 
     /**
@@ -28,7 +28,7 @@ class ShipmentPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->isSupplier();
     }
 
     /**
@@ -36,7 +36,7 @@ class ShipmentPolicy
      */
     public function update(User $user, Shipment $shipment): bool
     {
-        return true;
+        return $user->isSupplier() && $shipment->supplier_id === $user->supplier_id;
     }
 
     /**
@@ -44,7 +44,7 @@ class ShipmentPolicy
      */
     public function delete(User $user, Shipment $shipment): bool
     {
-        return true;
+        return $user->isSupplier() && $shipment->supplier_id === $user->supplier_id && $shipment->isDraft();
     }
 
     /**
@@ -52,7 +52,7 @@ class ShipmentPolicy
      */
     public function restore(User $user, Shipment $shipment): bool
     {
-        return true;
+        return $user->isSupplier();
     }
 
     /**
@@ -60,6 +60,6 @@ class ShipmentPolicy
      */
     public function forceDelete(User $user, Shipment $shipment): bool
     {
-        return true;
+        return $user->isSupplier();
     }
 }

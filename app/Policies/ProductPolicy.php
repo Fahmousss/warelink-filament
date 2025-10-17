@@ -62,4 +62,28 @@ class ProductPolicy
     {
         return $user->isAdmin() || $user->isChecker();
     }
+
+    /**
+     * Determine whether the user can activate the model.
+     */
+    public function activate(User $user, Product $product): bool
+    {
+        return $user->isAdmin() || $user->isChecker();
+    }
+
+    /**
+     * Determine whether the user can deactivate the model.
+     */
+    public function deactivate(User $user, Product $product): bool
+    {
+        return $user->isAdmin() || $user->isChecker();
+    }
+
+    /**
+     * Determine whether the user can duplicate the model.
+     */
+    public function duplicate(User $user, Product $product): bool
+    {
+        return $user->isAdmin() || $user->isChecker();
+    }
 }

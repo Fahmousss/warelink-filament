@@ -37,6 +37,7 @@ class SupplierPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Supplier/Resources'), for: 'App\Filament\Supplier\Resources')
             ->discoverResources(in: app_path('Filament/Resources/PurchaseOrders'), for: 'App\Filament\Resources\PurchaseOrders')
+            ->discoverResources(in: app_path('Filament/App/Resources/Products'), for: 'App\Filament\App\Resources\Products')
             ->discoverPages(in: app_path('Filament/Supplier/Pages'), for: 'App\Filament\Supplier\Pages')
             ->pages([
                 Dashboard::class,

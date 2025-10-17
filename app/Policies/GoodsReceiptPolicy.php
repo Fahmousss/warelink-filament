@@ -64,4 +64,28 @@ class GoodsReceiptPolicy
     {
         return $user->isChecker() || $user->isAdmin() && ($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING && $goodReceipt->status === \App\Enums\GoodsReceiptStatus::COMPLETED);
     }
+
+    /**
+     * Determine whether the user can verify the goods receipt.
+     */
+    public function verify(User $user, GoodsReceipt $goodReceipt): bool
+    {
+        return ($user->isChecker() || $user->isAdmin()) && $goodReceipt->isPending();
+    }
+
+    /**
+     * Determine whether the user can complete the goods receipt.
+     */
+    public function complete(User $user, GoodsReceipt $goodReceipt): bool
+    {
+        return ($user->isChecker() || $user->isAdmin()) && $goodReceipt->isVerified();
+    }
+
+    /**
+     * Determine whether the user can download the POD.
+     */
+    public function downloadPOD(User $user, GoodsReceipt $goodReceipt): bool
+    {
+        return $goodReceipt->pod_scan_path !== null && ($user->isChecker() || $user->isAdmin() || $user->isSupplier());
+    }
 }

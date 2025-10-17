@@ -32,7 +32,15 @@ class ViewShipment extends ViewRecord
                         ->body('Shipment is now in transit.')
                         ->send();
                 })
-                ->visible(fn () => $this->record->isDraft()),
+                ->visible(fn () => $this->record->isDraft() && auth()->user()->can('update', $this->record)),
+
+            Action::make('print')
+                ->label('Print POD')
+                ->icon('heroicon-m-printer')
+                ->color('primary')
+                ->url(fn () => route('download-pod', ['grn' => $this->record->goodsReceipt]))
+                ->openUrlInNewTab()
+                ->visible(fn () => (auth()->user()->can('downloadPOD', $this->record->goodsReceipt))),
 
             Action::make('mark_arrived')
                 ->label('Mark as Arrived')
@@ -50,7 +58,7 @@ class ViewShipment extends ViewRecord
                         ->body('Shipment has arrived at warehouse.')
                         ->send();
                 })
-                ->visible(fn () => $this->record->isShipped()),
+                ->visible(fn () => $this->record->isShipped() && ! $this->record->isArrived() && auth()->user()->can('update', $this->record)),
 
             Action::make('create_goods_receipt')
                 ->label('Create Goods Receipt')
@@ -63,7 +71,7 @@ class ViewShipment extends ViewRecord
                     'shipment_id' => $this->record->id,
                     'purchase_order_id' => $this->record->purchase_order_id,
                 ]))
-                ->visible(fn () => $this->record->isArrived() && ! $this->record->isProcessed()),
+                ->visible(fn () => $this->record->isArrived() && ! $this->record->isProcessed() && auth()->user()->can('create', \App\Models\GoodsReceipt::class)),
 
             EditAction::make()
                 ->visible(fn () => $this->record->isDraft()),

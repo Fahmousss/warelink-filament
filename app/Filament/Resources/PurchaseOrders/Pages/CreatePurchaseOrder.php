@@ -33,6 +33,11 @@ class CreatePurchaseOrder extends CreateRecord
 
     protected static bool $canCreateAnother = false;
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Calculate total amount

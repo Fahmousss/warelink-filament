@@ -27,6 +27,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class PurchaseOrdersTable
 {
@@ -186,9 +187,12 @@ class PurchaseOrdersTable
                         ->requiresConfirmation()
                         ->modalHeading('Cancel Purchase Order')
                         ->modalDescription('Are you sure you want to cancel this purchase order? This action cannot be undone.')
-                        ->action(fn ($record) => $record->markAsCancelled())
+                        ->action(function ($record) {
+                            Gate::authorize('update', $record);
+                            $record->markAsCancelled();
+                        })
                         ->successNotificationTitle('Purchase order cancelled')
-                        ->visible(fn ($record) => ! $record->isCompleted() && ! $record->isCancelled()),
+                        ->visible(fn ($record) => ! $record->isCompleted() && ! $record->isCancelled() && auth()->user()->can('update', $record)),
 
                     DeleteAction::make()
                         ->icon('heroicon-m-trash')
@@ -210,9 +214,9 @@ class PurchaseOrdersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn ($records) => $records->every(fn ($record) => $record->isPending()) && auth()->user()->can('delete', $records)),
+                    RestoreBulkAction::make()->visible(fn ($records) => auth()->user()->can('restore', $records)),
+                    ForceDeleteBulkAction::make()->visible(fn ($records) => auth()->user()->can('forceDelete', $records)),
                 ]),
             ])
             ->emptyStateHeading('No purchase orders yet')

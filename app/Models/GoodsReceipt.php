@@ -6,6 +6,7 @@ use App\Enums\GoodsReceiptStatus;
 use App\Enums\UserRole;
 use App\Policies\GoodsReceiptPolicy;
 use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
@@ -167,7 +168,7 @@ class GoodsReceipt extends Model
             ->title('Goods Receipt Completed')
             ->body("Goods Receipt {$this->grn_number} has been completed.")
             ->success()
-            ->icon('heroicon-o-archive')
+            ->icon(Heroicon::OutlinedArchiveBox)
             ->sendToDatabase($this->purchaseOrder->supplier->users);
     }
 

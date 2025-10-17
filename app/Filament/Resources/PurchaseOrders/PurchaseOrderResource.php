@@ -34,11 +34,8 @@ class PurchaseOrderResource extends Resource
 
     public static function isScopedToTenant(): bool
     {
-        if (Filament::getId() === 'supplier') {
-            return true;
-        }
 
-        return false;
+        return Filament::getId() === 'supplier';
     }
 
     public static function form(Schema $schema): Schema
@@ -71,6 +68,7 @@ class PurchaseOrderResource extends Resource
             'create' => CreatePurchaseOrder::route('/create'),
             'view' => ViewPurchaseOrder::route('/{record}'),
             'edit' => EditPurchaseOrder::route('/{record}/edit'),
+            'print' => Pages\PrintPurchaseOrder::route('/{record}/print'),
         ];
     }
 

@@ -29,6 +29,17 @@ class CreateShipment extends CreateRecord
 
     protected static bool $canCreateAnother = false;
 
+    public function mount(): void
+    {
+        $pid = request()->query('purchase_order_id');
+        $supplier = PurchaseOrder::find($pid)?->supplier->id;
+
+        $this->form->fill([
+            'purchase_order_id' => $pid,
+            'supplier_id' => $supplier,
+        ]);
+    }
+
     protected function getSteps(): array
     {
         return [
@@ -53,6 +64,7 @@ class CreateShipment extends CreateRecord
                                         ->required()
                                         ->searchable()
                                         ->preload()
+                                        ->live()
                                         ->reactive()
                                         ->afterStateUpdated(function ($state, Set $set): void {
                                             if ($state) {
@@ -72,6 +84,7 @@ class CreateShipment extends CreateRecord
                                         ->required()
                                         ->disabled()
                                         ->dehydrated()
+                                        ->reactive()
                                         ->prefixIcon('heroicon-m-building-storefront')
                                         ->helperText('Auto-filled from selected PO')
                                         ->columnSpan(1),

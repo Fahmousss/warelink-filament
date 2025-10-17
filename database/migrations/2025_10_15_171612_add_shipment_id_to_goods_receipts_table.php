@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::table('goods_receipts', function (Blueprint $table) {
             $table->foreignId('shipment_id')
                 ->nullable()
+                ->unique()
                 ->after('purchase_order_id')
                 ->constrained()
                 ->nullOnDelete();

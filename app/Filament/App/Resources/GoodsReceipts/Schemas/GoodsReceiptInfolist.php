@@ -3,7 +3,6 @@
 namespace App\Filament\App\Resources\GoodsReceipts\Schemas;
 
 use App\Enums\GoodsReceiptStatus;
-use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use Filament\Infolists;
 use Filament\Schemas\Components;
 use Filament\Schemas\Schema;
@@ -100,7 +99,6 @@ class GoodsReceiptInfolist
                                     ->iconColor('primary')
                                     ->size(TextSize::Large)
                                     ->weight('semibold')
-                                    ->url(fn ($record) => PurchaseOrderResource::getUrl('view', ['record' => $record]))
                                     ->hint(fn ($record) => "Supplier: {$record->purchaseOrder->supplier->name}")
                                     ->columnSpan(1),
 

@@ -3,7 +3,6 @@
 namespace App\Filament\Supplier\Resources\Shipments\Tables;
 
 use App\Enums\ShipmentStatus;
-use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -53,7 +52,6 @@ class ShipmentsTable
                     ->sortable()
                     ->icon('heroicon-m-shopping-cart')
                     ->iconColor('gray')
-                    ->url(fn ($record) => PurchaseOrderResource::getUrl('view', ['record' => $record]))
                     ->description(fn ($record) => $record->supplier->name)
                     ->toggleable()
                     ->visibleFrom('md'),
@@ -186,6 +184,14 @@ class ShipmentsTable
                         ->action(fn ($record) => $record->markAsArrived())
                         ->successNotificationTitle('Shipment marked as arrived')
                         ->visible(fn ($record) => $record->isShipped()),
+
+                    Action::make('print')
+                        ->label('Print POD')
+                        ->icon('heroicon-m-printer')
+                        ->color('primary')
+                        ->url(fn ($record) => route('download-pod', ['grn' => $record->goodsReceipt]))
+                        ->openUrlInNewTab()
+                        ->visible(fn ($record) => (auth()->user()->can('downloadPOD', $record->goodsReceipt))),
 
                     Action::make('create_goods_receipt')
                         ->label('Create Goods Receipt')

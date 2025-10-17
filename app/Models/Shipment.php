@@ -7,13 +7,16 @@ namespace App\Models;
 use App\Enums\ShipmentStatus;
 use App\Enums\UserRole;
 use App\Policies\ShipmentPolicy;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[UsePolicy(ShipmentPolicy::class)]
@@ -49,6 +52,11 @@ class Shipment extends Model
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function goodsReceipt(): HasOne
+    {
+        return $this->hasOne(GoodsReceipt::class);
     }
 
     public function supplier(): BelongsTo
@@ -98,7 +106,13 @@ class Shipment extends Model
             ->title('Shipment Shipped')
             ->body("Shipment {$this->shipment_number} has been marked as shipped.")
             ->success()
+            ->viewData(['shipment_id' => $this->id])
             ->icon('heroicon-o-truck')
+            ->actions([
+                Action::make('view_shipment')
+                    ->label('View Shipment')
+                    ->url(route('filament.app.resources.shipments.view', ['record' => $this->id])),
+            ])
             ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
 
@@ -110,6 +124,20 @@ class Shipment extends Model
             ->title('Shipment Arrived')
             ->body("Shipment {$this->shipment_number} has been marked as arrived.")
             ->success()
+            ->actions([
+                Action::make('view_shipment')
+                    ->label('View Shipment')
+                    ->url(route('filament.app.resources.shipments.view', ['record' => $this->id])),
+
+                Action::make('create_goods_receipt')
+                    ->label('Create Goods Receipt')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->color('success')
+                    ->url(route('filament.app.resources.goods-receipts.create', [
+                        'shipment_id' => $this->id,
+                        'purchase_order_id' => $this->purchase_order_id,
+                    ])),
+            ])
             ->icon('heroicon-o-check-circle')
             ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
@@ -123,7 +151,12 @@ class Shipment extends Model
             ->title('Shipment Processed')
             ->body("Shipment {$this->shipment_number} has been marked as processed.")
             ->info()
-            ->icon('heroicon-o-archive')
+            ->icon(Heroicon::OutlinedArchiveBox)
+            ->actions([
+                Action::make('view_shipment')
+                    ->label('View Shipment')
+                    ->url(route('filament.app.resources.shipments.view', ['record' => $this->id])),
+            ])
             ->sendToDatabase(User::where('role', UserRole::Admin)->orWhere('role', UserRole::Checker)->get());
     }
 

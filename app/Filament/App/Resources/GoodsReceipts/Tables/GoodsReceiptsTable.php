@@ -2,7 +2,6 @@
 
 namespace App\Filament\App\Resources\GoodsReceipts\Tables;
 
-use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -47,7 +46,6 @@ class GoodsReceiptsTable
                     ->sortable()
                     ->icon('heroicon-m-shopping-cart')
                     ->iconColor('gray')
-                    ->url(fn ($record) => PurchaseOrderResource::getUrl('view', ['record' => $record]))
                     ->description(fn ($record) => $record->purchaseOrder->supplier->name)
                     ->toggleable()
                     ->visibleFrom('md'),
@@ -172,7 +170,7 @@ class GoodsReceiptsTable
                         ->modalDescription('Confirm that all items have been verified.')
                         ->action(fn ($record) => $record->markAsVerified())
                         ->successNotificationTitle('Receipt verified')
-                        ->visible(fn ($record) => $record->isPending()),
+                        ->visible(fn ($record) => auth()->user()->can('verify', $record)),
 
                     Action::make('complete')
                         ->label('Complete')
@@ -183,16 +181,16 @@ class GoodsReceiptsTable
                         ->modalDescription('This will update product stock and mark the receipt as completed.')
                         ->action(fn ($record) => $record->markAsCompleted())
                         ->successNotificationTitle('Receipt completed and stock updated')
-                        ->visible(fn ($record) => $record->isVerified() || $record->isPending()),
+                        ->visible(fn ($record) => auth()->user()->can('complete', $record)),
 
                     EditAction::make()
                         ->icon('heroicon-m-pencil-square')
                         ->color('warning')
-                        ->visible(fn ($record) => ! $record->isCompleted()),
+                        ->visible(fn ($record) => auth()->user()->can('update', $record) && ! $record->isCompleted()),
 
                     DeleteAction::make()
                         ->icon('heroicon-m-trash')
-                        ->visible(fn ($record) => $record->isPending()),
+                        ->visible(fn ($record) => auth()->user()->can('delete', $record) && ! $record->isCompleted()),
 
                     RestoreAction::make()
                         ->icon('heroicon-m-arrow-uturn-left')
@@ -200,7 +198,8 @@ class GoodsReceiptsTable
 
                     ForceDeleteAction::make()
                         ->icon('heroicon-m-trash')
-                        ->color('danger'),
+                        ->color('danger')
+                        ->visible(fn ($record) => auth()->user()->can('forceDelete', $record)),
                 ])
                     ->label('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')

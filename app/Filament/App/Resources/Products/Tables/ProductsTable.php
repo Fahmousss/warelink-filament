@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Products\Tables;
 
+use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -32,6 +33,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 class ProductsTable
 {
@@ -297,7 +299,7 @@ class ProductsTable
                             : 'This product will be visible in listings and available for sale.')
                         ->action(fn ($record) => $record->update(['is_active' => ! $record->is_active]))
                         ->successNotificationTitle('Product status updated')
-                        ->visible(fn ($record) => ! $record->trashed()),
+                        ->visible(fn ($record) => ! $record->trashed() && auth()->user()->can('update', $record) && auth()->user()->can($record->is_active ? 'deactivate' : 'activate', $record)),
                     Action::make('duplicate')
                         ->label('Duplicate')
                         ->icon('heroicon-m-document-duplicate')
@@ -306,13 +308,14 @@ class ProductsTable
                         ->modalHeading('Duplicate Product')
                         ->modalDescription('This will create a copy of this product with a new product code.')
                         ->action(function ($record) {
+                            Gate::authorize('duplicate', $record);
                             $newProduct = $record->replicate();
                             $newProduct->product_code = $record->product_code.'-COPY';
                             $newProduct->name = $record->name.' (Copy)';
                             $newProduct->save();
                         })
                         ->successNotificationTitle('Product duplicated successfully')
-                        ->visible(fn ($record) => ! $record->trashed()),
+                        ->visible(fn ($record) => ! $record->trashed() && auth()->user()->can('duplicate', $record)),
                     DeleteAction::make()
                         ->icon('heroicon-m-trash')
                         ->visible(fn ($record) => ! $record->trashed()),
@@ -340,6 +343,7 @@ class ProductsTable
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion()
                         ->action(fn (Collection $records) => $records->each->update(['is_active' => true]))
+                        ->visible(fn (Collection $records) => $records->isNotEmpty() || auth()->user()->can('activate', $records))
                         ->successNotificationTitle('Products activated successfully'),
 
                     BulkAction::make('deactivate')
@@ -349,6 +353,7 @@ class ProductsTable
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion()
                         ->action(fn (Collection $records) => $records->each->update(['is_active' => false]))
+                        ->visible(fn (Collection $records) => $records->isNotEmpty() || auth()->user()->can('deactivate', $records))
                         ->successNotificationTitle('Products deactivated successfully'),
 
                     BulkAction::make('adjust_stock')
@@ -381,6 +386,7 @@ class ProductsTable
                             });
                         })
                         ->deselectRecordsAfterCompletion()
+                        ->visible(fn (Collection $records) => $records->isNotEmpty() || auth()->user()->can('update', $records))
                         ->successNotificationTitle('Stock adjusted successfully'),
 
                     // ExportBulkAction::make()
@@ -390,16 +396,19 @@ class ProductsTable
 
                     DeleteBulkAction::make()
                         ->icon('heroicon-m-trash')
+                        ->visible(fn ($records) => $records->isNotEmpty() || auth()->user()->can('delete', $records))
                         ->deselectRecordsAfterCompletion(),
 
                     ForceDeleteBulkAction::make()
                         ->icon('heroicon-m-trash')
                         ->color('danger')
+                        ->visible(fn ($records) => $records->isNotEmpty() || auth()->user()->can('forceDelete', $records))
                         ->deselectRecordsAfterCompletion(),
 
                     RestoreBulkAction::make()
                         ->icon('heroicon-m-arrow-uturn-left')
                         ->color('success')
+                        ->visible(fn ($records) => $records->isNotEmpty() || auth()->user()->can('restore', $records))
                         ->deselectRecordsAfterCompletion(),
                 ])
                     ->label('Bulk actions')

@@ -3,7 +3,6 @@
 namespace App\Filament\Supplier\Resources\Shipments\Schemas;
 
 use App\Enums\ShipmentStatus;
-use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use App\Models\Shipment;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -106,7 +105,6 @@ class ShipmentInfolist
                                             ->label('Purchase Order')
                                             ->icon('heroicon-m-shopping-cart')
                                             ->iconColor('primary')
-                                            ->url(fn ($record) => PurchaseOrderResource::getUrl('view', ['record' => $record]))
                                             ->weight('semibold')
                                             ->columnSpan(1),
 
@@ -152,7 +150,7 @@ class ShipmentInfolist
                                     ->label('Delivery Order Scan')
                                     ->disk('public')
                                     ->visibility('public')
-                                    ->height(300)
+                                    ->imageHeight(300)
                                     ->visible(fn ($record) => $record->do_scan_path)
                                     ->columnSpanFull(),
                             ])
