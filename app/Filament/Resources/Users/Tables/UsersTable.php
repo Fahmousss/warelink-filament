@@ -249,6 +249,7 @@ class UsersTable
                     DeleteBulkAction::make()
                         ->icon('heroicon-m-trash')
                         ->requiresConfirmation()
+                        ->visible(fn (Collection $records) => $records->every(fn ($record) => ! $record->isAdmin() && ! $record->isActive()))
                         ->deselectRecordsAfterCompletion(),
                 ])
                     ->label('Bulk actions')

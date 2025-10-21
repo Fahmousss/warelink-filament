@@ -45,7 +45,7 @@ class PurchaseOrdersTable
                     ->copyMessage('PO number copied!')
                     ->fontFamily(FontFamily::Mono)
                     ->weight('semibold')
-                    ->description(fn ($record) => $record->supplier->name)
+                    ->description(fn ($record) => $record->supplier?->name)
                     ->toggleable(),
 
                 TextColumn::make('supplier.name')
@@ -54,7 +54,7 @@ class PurchaseOrdersTable
                     ->sortable()
                     ->icon('heroicon-m-building-storefront')
                     ->iconColor('gray')
-                    ->description(fn ($record) => $record->supplier->code)
+                    ->description(fn ($record) => $record->supplier?->code)
                     ->toggleable()
                     ->visibleFrom('md'),
 

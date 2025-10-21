@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\App\Pages\Chats;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Route;
@@ -20,4 +21,8 @@ Route::get('/print-po/{record}', function (PurchaseOrder $record) {
     }
 
     return view('filament.resources.purchase-orders.pages.print-purchase-order', ['record' => $record]);
-})->name('print-po')->middleware('auth')->can('');
+})->name('print-po')->middleware('auth');
+
+// Route::get('chats', function () {
+//     return redirect()->to(Chats::getUrl());
+// })->name('filament.admin.pages.chats')->middleware(['web', 'auth']);

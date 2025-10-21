@@ -203,7 +203,7 @@ class PurchaseOrder extends Model
     protected static function generatePONumber(): string
     {
         $date = now()->format('Ymd');
-        $count = self::whereDate('created_at', now())->count() + 1;
+        $count = self::withTrashed()->whereDate('created_at', now())->count() + 1;
 
         return 'PO-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
     }

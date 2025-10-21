@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
-use App\Enums\PurchaseOrderStatus;
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use App\Models\Product;
 use Filament\Actions\Action;
@@ -109,22 +108,13 @@ class CreatePurchaseOrder extends CreateRecord
 
                                     DatePicker::make('expected_delivery_date')
                                         ->label('Expected Delivery')
+                                        ->required()
                                         ->native(false)
                                         ->after('order_date')
                                         ->prefixIcon('heroicon-m-truck')
                                         ->helperText('Expected date of delivery')
                                         ->columnSpan(1),
                                 ]),
-
-                            Select::make('status')
-                                ->label('Status')
-                                ->options(PurchaseOrderStatus::class)
-                                ->default('Pending')
-                                ->required()
-                                ->native(false)
-                                ->prefixIcon('heroicon-m-flag')
-                                ->helperText('Current order status')
-                                ->visible(fn ($record) => $record !== null),
 
                             Textarea::make('notes')
                                 ->label('Notes')
@@ -212,9 +202,10 @@ class CreatePurchaseOrder extends CreateRecord
                                                 ->label('Quantity')
                                                 ->required()
                                                 ->numeric()
+                                                ->integer()
                                                 ->minValue(1)
-                                                ->default(0)
-                                                ->reactive()
+                                                ->default(1)
+                                                ->live(onBlur: true)
                                                 ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                     $price = $get('price') ?? 0;
                                                     $set('subtotal', $state * $price);
@@ -259,7 +250,6 @@ class CreatePurchaseOrder extends CreateRecord
                                 ->defaultItems(1)
                                 ->reorderable()
                                 ->collapsible()
-                                ->cloneable()
                                 ->itemLabel(fn (array $state): ?string => Product::find($state['product_id'] ?? null)?->name ?? 'New Item'
                                 )
                                 ->addActionLabel('Add Product')

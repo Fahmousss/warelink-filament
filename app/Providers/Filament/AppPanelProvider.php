@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Auth\EditProfile;
+use App\Filament\App\Pages\Chats;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\FontProviders\GoogleFontProvider;
@@ -15,6 +16,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -23,6 +25,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
@@ -35,6 +38,7 @@ class AppPanelProvider extends PanelProvider
             ->profile(page: EditProfile::class, isSimple: false)
             ->login()
             ->passwordReset()
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->emailVerification(isRequired: env('APP_ENV') === 'production')
             ->colors([
                 'primary' => Color::Blue,
@@ -71,11 +75,17 @@ class AppPanelProvider extends PanelProvider
                     ->url(fn (): string => Filament::getPanel('admin')->getUrl())
                     ->icon('heroicon-o-shield-check')
                     ->visible(fn (): bool => auth()->user()->canAccessPanel(Filament::getPanel('admin'))),
+                Action::make('chats')
+                    ->label('Messages')
+                    ->url(fn (): string => Chats::getUrl())
+                    ->icon(Heroicon::OutlinedChatBubbleOvalLeft),
             ])
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn () => view('filament.app.auth.login-form-before'),
             )
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => Blade::render('@wirechatStyles()'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => Blade::render('@wirechatAssets()'))
             ->brandLogo(fn () => view('filament.app.logo'))
             ->darkModeBrandLogo(fn () => view('filament.app.dark-logo'))
             ->sidebarCollapsibleOnDesktop()
@@ -91,6 +101,7 @@ class AppPanelProvider extends PanelProvider
                 title: 'Record not found',
                 body: 'A record you are looking for does not exist.',
                 statusCode: 404,
-            )->viteTheme('resources/css/filament/admin/theme.css');
+            )
+            ->broadcasting();
     }
 }

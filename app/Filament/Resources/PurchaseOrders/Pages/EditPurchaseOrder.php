@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
-use App\Enums\PurchaseOrderStatus;
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use App\Models\Product;
 use Filament\Actions\Action;
@@ -138,21 +137,13 @@ class EditPurchaseOrder extends EditRecord
 
                                     DatePicker::make('expected_delivery_date')
                                         ->label('Expected Delivery')
+                                        ->required()
+                                        ->after('order_date')
                                         ->native(false)
                                         ->prefixIcon('heroicon-m-truck')
                                         ->helperText('Expected date of delivery')
                                         ->columnSpan(1),
                                 ]),
-
-                            Select::make('status')
-                                ->label('Status')
-                                ->options(PurchaseOrderStatus::class)
-                                ->default('Pending')
-                                ->required()
-                                ->native(false)
-                                ->prefixIcon('heroicon-m-flag')
-                                ->helperText('Current order status')
-                                ->visible(fn ($record) => $record !== null),
 
                             Textarea::make('notes')
                                 ->label('Notes')
@@ -179,12 +170,23 @@ class EditPurchaseOrder extends EditRecord
                                         ->schema([
                                             Select::make('product_id')
                                                 ->label('Product')
-                                                ->relationship('product', 'name', fn (Builder $query) => $query->active())
+                                                ->relationship('product', 'name', function (Builder $query, Get $get) {
+                                                    $supplierId = $get('../../supplier_id');
+                                                    if (! $supplierId) {
+                                                        return $query->whereRaw('1 = 0');
+                                                    }
+                                                    $query->bySupplier($supplierId)->active();
+                                                })
+                                                ->getOptionLabelFromRecordUsing(fn ($record) => $record->name.' - '.
+                                                $record->stock_status_label.'
+                                                ('.$record->stock_quantity.' '.$record->unit.')'
+                                                )
                                                 ->required()
                                                 ->searchable()
                                                 ->preload()
                                                 ->live(onBlur: true)
                                                 ->reactive()
+                                                ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                                 ->afterStateUpdated(function ($state, Set $set) {
                                                     if ($state) {
                                                         $product = Product::find($state);
@@ -196,6 +198,26 @@ class EditPurchaseOrder extends EditRecord
                                                     }
                                                 })
                                                 ->columnSpan(4),
+                                            TextEntry::make('stock_warning')
+                                                ->state(function (Get $get) {
+                                                    $productId = $get('product_id');
+                                                    if (! $productId) {
+                                                        return null;
+                                                    }
+
+                                                    $product = Product::find($productId);
+                                                    if ($product->is_out_of_stock) {
+                                                        return new HtmlString('
+                <div class="text-danger-600">
+                    ⚠️ This product is out of stock!
+                </div>
+            ');
+                                                    }
+
+                                                    return null;
+                                                })
+                                                ->visible(fn (Get $get) => $get('product_id') && Product::find($get('product_id'))->is_out_of_stock
+                                                ),
 
                                             TextEntry::make('_product_code')
                                                 ->label('Code')
@@ -210,8 +232,8 @@ class EditPurchaseOrder extends EditRecord
                                                 ->required()
                                                 ->numeric()
                                                 ->minValue(1)
-                                                ->default(0)
-                                                ->reactive()
+                                                ->default(1)
+                                                ->live(onBlur: true)
                                                 ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                     $price = $get('price') ?? 0;
                                                     $set('subtotal', $state * $price);

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
@@ -70,7 +71,7 @@ class Product extends Model
     /**
      * Get the supplier that provides this product
      */
-    public function supplier()
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
@@ -562,7 +563,7 @@ class Product extends Model
     protected static function generateProductCode(string $supplier_code): string
     {
         $date = now()->format('Ymd');
-        $count = self::whereDate('created_at', now())->count() + 1;
+        $count = self::withTrashed()->whereDate('created_at', now())->count() + 1;
         $supplier = Supplier::find($supplier_code)->code;
 
         return 'PROD-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT).'-'.$supplier;

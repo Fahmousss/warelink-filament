@@ -17,7 +17,11 @@ class PurchaseOrderDetailFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'quantity_ordered' => fake()->numberBetween(1, 100),
+            'quantity_received' => fake()->numberBetween(0, 100),
+            'price' => fake()->randomFloat(2, 10, 1000),
+            'subtotal' => fake()->randomFloat(2, 100, 10000),
+            'notes' => fake()->sentence(),
         ];
     }
 }

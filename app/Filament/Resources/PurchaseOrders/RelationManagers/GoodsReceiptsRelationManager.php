@@ -13,8 +13,8 @@ use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -24,6 +24,11 @@ use Filament\Tables\Table;
 class GoodsReceiptsRelationManager extends RelationManager
 {
     protected static string $relationship = 'goodsReceipts';
+
+    public function isReadOnly(): bool
+    {
+        return true;
+    }
 
     public function form(Schema $schema): Schema
     {

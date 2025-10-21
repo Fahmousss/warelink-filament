@@ -2,3 +2,4 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+@import '../../../../vendor/wirechat/wirechat/resources/css/app.css';

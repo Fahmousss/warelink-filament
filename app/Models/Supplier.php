@@ -56,6 +56,11 @@ class Supplier extends Model
         return $this->hasMany(User::class);
     }
 
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
     #[Scope]
     protected function active(Builder $query): void
     {

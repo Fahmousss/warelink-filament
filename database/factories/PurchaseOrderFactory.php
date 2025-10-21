@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PurchaseOrderStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,17 +18,13 @@ class PurchaseOrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->numberBetween(1, 1000),
-            'po_number' => $this->faker->text(),
-            'supplier_id' => $this->faker->numberBetween(1, 1000),
-            'order_date' => $this->faker->date(),
-            'expected_delivery_date' => $this->faker->date(),
-            'status' => $this->faker->text(),
-            'total_amount' => fake()->text(),
-            'notes' => $this->faker->paragraph(),
-            'created_at' => $this->faker->dateTime(),
-            'updated_at' => $this->faker->dateTime(),
-            'deleted_at' => $this->faker->dateTime(),
+            'order_date' => fake()->date(),
+            'expected_delivery_date' => fake()->date(),
+            'status' => PurchaseOrderStatus::PENDING,
+            'total_amount' => fake()->randomFloat(2, 100, 10000),
+            'notes' => fake()->paragraph(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

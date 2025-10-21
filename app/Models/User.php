@@ -9,17 +9,21 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Wirechat\Wirechat\Contracts\WirechatUser;
+use Wirechat\Wirechat\Panel as WirechatPanel;
+use Wirechat\Wirechat\Traits\InteractsWithWirechat;
 
 #[UsePolicy(\App\Policies\UserPolicy::class)]
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasTenants, WirechatUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, InteractsWithWirechat, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -62,6 +66,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         ];
     }
 
+    protected function scopeSupplier(Builder $query): Builder
+    {
+        return $query->where('role', \App\Enums\UserRole::Supplier);
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
@@ -94,7 +103,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->supplier_id === $tenant->id;
+        return $this->supplier_id === $tenant->id && $this->isSupplier() && $this->isActive() && $this->supplier?->isActive();
     }
 
     public function getTenants(Panel $panel): array|Collection
@@ -112,11 +121,36 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             return $this->isSupplier() && $this->isActive();
         }
 
-        return $this->isActive();
+        return ($this->isChecker() && $this->isActive()) || $this->isAdmin();
     }
 
     public function getFilamentAvatarUrl(): ?string
     {
         return Filament::getUserAvatarUrl($this);
+    }
+
+    /**
+     * Control whether this user is allowed to create 1-to-1 chats.
+     */
+    public function canCreateChats(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Control whether this user can create group conversations.
+     */
+    public function canCreateGroups(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Decide if this user may access the given panel.
+     * Here, only users with verified emails are allowed.
+     */
+    public function canAccessWirechatPanel(WirechatPanel $panel): bool
+    {
+        return true;
     }
 }

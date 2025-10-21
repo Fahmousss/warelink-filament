@@ -112,7 +112,7 @@ class PurchaseOrderInfolist
                                     ->iconColor('gray')
                                     ->size(TextSize::Large)
                                     ->weight('semibold')
-                                    ->hint(fn ($record) => $record->supplier->code)
+                                    ->hint(fn ($record) => $record->supplier?->code)
                                     ->columnSpan(1),
 
                                 TextEntry::make('order_date')

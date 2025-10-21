@@ -71,6 +71,7 @@ class PurchaseOrderDetail extends Model
         });
 
         static::saved(function ($detail) {
+
             $detail->purchaseOrder->calculateTotalAmount();
             $detail->purchaseOrder->updateStatus();
         });
