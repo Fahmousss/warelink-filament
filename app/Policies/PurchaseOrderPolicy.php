@@ -20,7 +20,7 @@ class PurchaseOrderPolicy
      */
     public function view(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return $user->isAdmin() || ($user->isSupplier() && $purchaseOrder->supplier_id === $user->supplier_id);
+        return $user->isAdmin() || $user->isChecker() || ($user->isSupplier() && $purchaseOrder->supplier_id === $user->supplier_id);
     }
 
     /**

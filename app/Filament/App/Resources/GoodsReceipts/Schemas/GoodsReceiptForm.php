@@ -7,6 +7,7 @@ use App\Enums\ShipmentStatus;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Shipment;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components as FormComponents;
 use Filament\Forms\Components\Select;
@@ -237,6 +238,7 @@ class GoodsReceiptForm
                                             ->searchable()
                                             ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                             ->reactive()
+
                                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                 if ($state) {
                                                     $product = Product::find($state);
@@ -317,6 +319,14 @@ class GoodsReceiptForm
                                             ->minValue(1)
                                             ->default(1)
                                             ->reactive()
+                                            ->rules([
+                                                fn (Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                                                    $quantity_shipped = $get('_quantity_shipped') ?? 0;
+                                                    if ($value > $quantity_shipped) {
+                                                        $fail('The :attribute cannot be grater than ordered');
+                                                    }
+                                                },
+                                            ])
                                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                 // Auto-set accepted if not manually changed
                                                 $rejected = $get('quantity_rejected') ?? 0;
@@ -369,6 +379,7 @@ class GoodsReceiptForm
                                     ->columnSpanFull(),
                             ])
                             ->minItems(1)
+                            ->required()
                             ->defaultItems(0)
                             ->reorderable(false)
                             ->collapsible()

@@ -9,6 +9,9 @@ use App\Filament\App\Resources\Products\Pages\ViewProduct;
 use App\Filament\App\Resources\Products\Schemas\ProductForm;
 use App\Filament\App\Resources\Products\Schemas\ProductInfolist;
 use App\Filament\App\Resources\Products\Tables\ProductsTable;
+use App\Filament\App\Resources\Products\Widgets\LowStockProducts;
+use App\Filament\App\Resources\Products\Widgets\ProductStockChart;
+use App\Filament\App\Resources\Products\Widgets\StatsOverviewWidget;
 use App\Models\Product;
 use BackedEnum;
 use Filament\Facades\Filament;
@@ -56,6 +59,15 @@ class ProductResource extends Resource
     {
         return [
             //
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            StatsOverviewWidget::class,
+            LowStockProducts::class,
+            ProductStockChart::class,
         ];
     }
 

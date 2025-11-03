@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GoodReceipt>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ShipmentDetail>
  */
-class GoodReceiptFactory extends Factory
+class ShipmentDetailFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,7 +17,8 @@ class GoodReceiptFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'quantity_shipped' => fake()->numberBetween(0, 99),
+            'notes' => fake()->paragraph(),
         ];
     }
 }

@@ -24,9 +24,13 @@ class CreateGoodsReceipt extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            Action::make()
+            Action::make('createAndVerify')
                 ->label('Create & Verify')
                 ->action('createAndVerify'),
+            Action::make('createAndComplete')
+                ->label('Create & Complete')
+                ->action('createAndComplete')
+                ->success(),
             $this->getCreateFormAction()
                 ->label('Create as Pending')
                 ->action('create'),
@@ -50,12 +54,15 @@ class CreateGoodsReceipt extends CreateRecord
 
         if ($this->record) {
             $this->record->markAsVerified();
+        }
+    }
 
-            Notification::make()
-                ->success()
-                ->title('Receipt Verified')
-                ->body('Goods receipt has been created and verified.')
-                ->send();
+    public function createAndComplete(): void
+    {
+        $this->create();
+
+        if ($this->record) {
+            $this->record->markAsCompleted();
         }
     }
 }

@@ -121,7 +121,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Wirechat
             return $this->isSupplier() && $this->isActive();
         }
 
-        return ($this->isChecker() && $this->isActive()) || $this->isAdmin();
+        return (($this->isChecker() || $this->isAccounting()) && $this->isActive()) || $this->isAdmin();
     }
 
     public function getFilamentAvatarUrl(): ?string

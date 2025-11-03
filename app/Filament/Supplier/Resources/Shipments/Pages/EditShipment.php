@@ -101,6 +101,8 @@ class EditShipment extends EditRecord
 
                                     DatePicker::make('estimated_arrival_date')
                                         ->label('Estimated Arrival')
+                                        ->required()
+                                        ->after('shipping_date')
                                         ->native(false)
                                         ->prefixIcon('heroicon-m-clock')
                                         ->helperText('Expected arrival at warehouse')

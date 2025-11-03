@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ShipmentStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,12 @@ class ShipmentFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'delivery_order_number' => fake()->sentence(),
+            'shipping_date' => now(),
+            'estimated_arrival_date' => now()->addDays(7),
+            'status' => ShipmentStatus::DRAFT,
+            'do_scan_path' => null,
+            'notes' => null,
         ];
     }
 }

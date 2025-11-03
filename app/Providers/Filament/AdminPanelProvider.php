@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Auth\EditProfile;
+use App\Filament\Pages\Dashboard as PagesDashboard;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\FontProviders\GoogleFontProvider;
@@ -10,7 +11,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -44,12 +44,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Supplier/Resources/Shipments'), for: 'App\Filament\Supplier\Resources\Shipments')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
-                Dashboard::class,
+                PagesDashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                // AccountWidget::class,
+                // FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -77,8 +77,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
-            ->renderHook(PanelsRenderHook::HEAD_END, fn () => Blade::render('@wirechatStyles()'))
-            ->renderHook(PanelsRenderHook::BODY_END, fn () => Blade::render('@wirechatAssets()'))
+            // ->renderHook(PanelsRenderHook::HEAD_END, fn () => Blade::render('@wirechatStyles()'))
+            // ->renderHook(PanelsRenderHook::BODY_END, fn () => Blade::render('@wirechatAssets()'))
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn () => view('filament.admin.auth.login-form-before'),
+            )
             ->topbar(false)
             ->font('Manrope', provider: GoogleFontProvider::class)
             ->registerErrorNotification(
@@ -91,6 +95,7 @@ class AdminPanelProvider extends PanelProvider
                 body: 'A record you are looking for does not exist.',
                 statusCode: 404,
             )
+            ->breadcrumbs(false)
             ->viteTheme('resources/css/filament/admin/theme.css');
     }
 }

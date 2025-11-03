@@ -47,7 +47,7 @@ test('admin can view list of purchase orders', function () {
 
     livewire(ListPurchaseOrders::class)
         ->loadTable()
-        ->assertCanSeeTableRecords([$purchaseOrdersDetail])
+        ->assertCanSeeTableRecords([$purchaseOrdersDetail->purchaseOrder])
         ->assertOk()
         ->assertSuccessful();
 });

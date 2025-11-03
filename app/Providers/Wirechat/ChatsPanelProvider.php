@@ -34,7 +34,6 @@ class ChatsPanelProvider extends PanelProvider
                         ->limit(10)
                         ->get()
                 );
-
             })
             ->maxUploads(5)
             ->redirectToHomeAction()
