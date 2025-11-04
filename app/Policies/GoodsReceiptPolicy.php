@@ -62,7 +62,7 @@ class GoodsReceiptPolicy
      */
     public function forceDelete(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return $user->isChecker() || $user->isAdmin() && ($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING && $goodReceipt->status === \App\Enums\GoodsReceiptStatus::COMPLETED);
+        return ($user->isChecker() || $user->isAdmin()) && ($goodReceipt->status === \App\Enums\GoodsReceiptStatus::PENDING || $goodReceipt->status === \App\Enums\GoodsReceiptStatus::COMPLETED);
     }
 
     /**
@@ -78,7 +78,7 @@ class GoodsReceiptPolicy
      */
     public function complete(User $user, GoodsReceipt $goodReceipt): bool
     {
-        return $user->isChecker() || $user->isAdmin() && ! $goodReceipt->isCompleted();
+        return ($user->isChecker() || $user->isAdmin()) && ! $goodReceipt->isCompleted();
     }
 
     /**

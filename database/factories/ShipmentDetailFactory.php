@@ -17,7 +17,8 @@ class ShipmentDetailFactory extends Factory
     public function definition(): array
     {
         return [
-            'quantity_shipped' => fake()->numberBetween(0, 99),
+            'product_id' => \App\Models\Product::factory()->for(\App\Models\Supplier::factory(), 'supplier'),
+            'quantity_shipped' => fake()->numberBetween(1, 99),
             'notes' => fake()->paragraph(),
         ];
     }

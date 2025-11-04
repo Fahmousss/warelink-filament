@@ -20,7 +20,7 @@ class ShipmentPolicy
      */
     public function view(User $user, Shipment $shipment): bool
     {
-        return $user->isSupplier() && $shipment->supplier_id === $user->supplier_id || ($user->isChecker() || $user->isAdmin());
+        return ($user->isSupplier() && $shipment->supplier_id === $user->supplier_id) || $user->isChecker() || $user->isAdmin();
     }
 
     /**
