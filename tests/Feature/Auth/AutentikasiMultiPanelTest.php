@@ -6,19 +6,17 @@ use App\Models\User;
 use Filament\Auth\Pages\Login;
 use Filament\Facades\Filament;
 
-// use Filament\Pages\Auth\Login;
-
 use function Pest\Livewire\livewire;
 
 beforeEach(function () {
-    // Create supplier for multi-tenant testing
+    // Membuat supplier untuk testing multi-tenant
     $this->supplier = Supplier::factory()->create([
         'name' => 'Test Supplier',
         'code' => 'SUP00001',
         'is_active' => true,
     ]);
 
-    // Create users for different panels
+    // Membuat user untuk berbagai panel
     $this->adminUser = User::factory()->create([
         'email' => 'admin@example.com',
         'password' => bcrypt('password'),
@@ -42,16 +40,16 @@ beforeEach(function () {
     ]);
 });
 
-describe('Admin Panel Login', function () {
+describe('Login Panel Admin', function () {
     beforeEach(fn () => Filament::setCurrentPanel('admin'));
 
-    it('can render admin login page', function () {
+    test('dapat menampilkan halaman login admin', function () {
         $this->get('/admin/login')
             ->assertSuccessful()
             ->assertSeeLivewire(Login::class);
     });
 
-    it('can login to admin panel with valid credentials', function () {
+    test('dapat login ke panel admin dengan kredensial yang valid', function () {
         livewire(Login::class)
             ->fillForm([
                 'email' => 'admin@example.com',
@@ -63,7 +61,7 @@ describe('Admin Panel Login', function () {
         $this->assertAuthenticated();
     });
 
-    it('cannot login to admin panel with invalid credentials', function () {
+    test('tidak dapat login ke panel admin dengan kredensial yang salah', function () {
         livewire(Login::class)
             ->fillForm([
                 'email' => 'admin@example.com',
@@ -75,7 +73,7 @@ describe('Admin Panel Login', function () {
         $this->assertGuest();
     });
 
-    it('cannot access admin panel with non-admin role', function () {
+    test('tidak dapat mengakses panel admin dengan role non-admin', function () {
         $this->actingAs($this->appUser);
 
         $this->get('/admin')
@@ -83,16 +81,16 @@ describe('Admin Panel Login', function () {
     });
 });
 
-describe('App Panel Login', function () {
+describe('Login Panel App', function () {
     beforeEach(fn () => Filament::setCurrentPanel('app'));
 
-    it('can render app login page', function () {
+    test('dapat menampilkan halaman login app', function () {
         $this->get('/login')
             ->assertSuccessful()
             ->assertSeeLivewire(Login::class);
     });
 
-    it('can login to app panel with valid credentials', function () {
+    test('dapat login ke panel app dengan kredensial yang valid', function () {
         livewire(Login::class)
             ->fillForm([
                 'email' => 'checker@example.com',
@@ -104,7 +102,7 @@ describe('App Panel Login', function () {
         $this->assertAuthenticated();
     });
 
-    it('inactive users cannot login to app panel', function () {
+    test('user yang tidak aktif tidak dapat login ke panel app', function () {
         $inactiveUser = User::factory()->create([
             'email' => 'inactive@example.com',
             'password' => bcrypt('password'),
@@ -124,16 +122,16 @@ describe('App Panel Login', function () {
     });
 });
 
-describe('Supplier Panel Login', function () {
+describe('Login Panel Supplier', function () {
     beforeEach(fn () => Filament::setCurrentPanel('supplier'));
 
-    it('can render supplier login page', function () {
+    test('dapat menampilkan halaman login supplier', function () {
         $this->get('/supplier/login')
             ->assertSuccessful()
             ->assertSeeLivewire(Login::class);
     });
 
-    it('can login to supplier panel with valid credentials and tenant', function () {
+    test('dapat login ke panel supplier dengan kredensial dan tenant yang valid', function () {
         livewire(Login::class)
             ->fillForm([
                 'email' => 'supplier@example.com',
@@ -145,12 +143,12 @@ describe('Supplier Panel Login', function () {
         Filament::setTenant($this->supplier);
         $this->assertAuthenticated();
 
-        // Verify tenant is set correctly
+        // Memverifikasi tenant diset dengan benar
         expect(Filament::getTenant()->getOriginal('code'))
             ->toBe($this->supplier->code);
     });
 
-    it('supplier cannot access another suppliers tenant', function () {
+    test('supplier tidak dapat mengakses tenant supplier lain', function () {
         $anotherSupplier = Supplier::factory()->create();
 
         $this->actingAs($this->supplierUser);
@@ -160,14 +158,14 @@ describe('Supplier Panel Login', function () {
             ->assertNotFound();
     });
 
-    it('non-supplier users cannot access supplier panel', function () {
+    test('user non-supplier tidak dapat mengakses panel supplier', function () {
         $this->actingAs($this->adminUser);
 
         $this->get("/supplier/{$this->supplier->code}")
             ->assertForbidden();
     });
 
-    it('inactive supplier cannot login to supplier panel', function () {
+    test('supplier yang tidak aktif tidak dapat login ke panel supplier', function () {
         $inactiveSupplier = Supplier::factory()->create([
             'is_active' => false,
         ]);
@@ -194,29 +192,29 @@ describe('Supplier Panel Login', function () {
     });
 });
 
-describe('Cross Panel Access Control', function () {
-    it('supplier user cannot access admin panel', function () {
+describe('Kontrol Akses Antar Panel', function () {
+    test('user supplier tidak dapat mengakses panel admin', function () {
         $this->actingAs($this->supplierUser);
 
         $this->get('/admin')->assertForbidden();
     });
 
-    it('supplier user cannot access app panel', function () {
+    test('user supplier tidak dapat mengakses panel app', function () {
         $this->actingAs($this->supplierUser);
 
         $this->get('/')->assertForbidden();
     });
 
-    it('admin can access all panels', function () {
+    test('admin dapat mengakses semua panel', function () {
         $this->actingAs($this->adminUser);
 
         $this->get('/admin')->assertSuccessful();
         $this->get('/')->assertSuccessful();
-        // Admin can access supplier panel through impersonation, not direct access
+        // Admin dapat mengakses panel supplier melalui impersonation, bukan akses langsung
         $this->get("/supplier/{$this->supplier->code}")->assertForbidden();
     });
 
-    it('checker can only access app panel', function () {
+    test('checker hanya dapat mengakses panel app', function () {
         $this->actingAs($this->appUser);
 
         $this->get('/')->assertSuccessful();

@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Enums\GoodsReceiptStatus;
@@ -24,7 +23,7 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
-// Test Setup
+// Setup Test
 beforeEach(function () {
     $this->checker = User::factory()->checker()->create();
     $this->admin = User::factory()->admin()->create();
@@ -32,8 +31,8 @@ beforeEach(function () {
     $this->supplierUser = User::factory()->supplier()->create();
 });
 
-// Group 1: Core Functionality & Workflow Tests
-test('checker can create goods receipt from shipment (happy path)', function () {
+// Grup 1: Fungsionalitas Inti & Workflow
+test('checker dapat membuat penerimaan barang dari shipment', function () {
     $undoRepeaterFaker = Repeater::fake();
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
@@ -93,7 +92,7 @@ test('checker can create goods receipt from shipment (happy path)', function () 
     ]);
 });
 
-test('checker can create partial receipt', function () {
+test('checker dapat membuat penerimaan barang secara parsial', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -150,12 +149,12 @@ test('checker can create partial receipt', function () {
         ->call('createAndComplete')
         ->assertHasNoFormErrors();
 
-    // Verify PO status changes to Partial
+    // Memverifikasi status PO berubah menjadi Partial
     expect($shipment->purchaseOrder->fresh()->status)
         ->toBe(PurchaseOrderStatus::PARTIAL);
 });
 
-test('checker can handle rejected items', function () {
+test('checker dapat menangani barang yang ditolak', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -217,12 +216,12 @@ test('checker can handle rejected items', function () {
         'quantity_rejected' => 2,
         'rejection_reason' => 'Items damaged during transit',
     ]);
-    // Verify PO status changes to Partial
+    // Memverifikasi status PO berubah menjadi Partial
     expect($shipment->purchaseOrder->fresh()->status)
         ->toBe(PurchaseOrderStatus::PARTIAL);
 });
 
-test('system completes PO when all items received', function () {
+test('sistem menyelesaikan PO ketika semua barang sudah diterima', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -269,7 +268,7 @@ test('system completes PO when all items received', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -297,7 +296,7 @@ test('system completes PO when all items received', function () {
             'details')
         ->create();
 
-    // Verify and complete the GR
+    // Memverifikasi dan menyelesaikan GR
     livewire(ViewGoodsReceipt::class, [
         'record' => $gr->id,
     ])
@@ -306,12 +305,12 @@ test('system completes PO when all items received', function () {
         ->callAction('complete')
         ->assertHasNoFormErrors();
 
-    // Check PO status
+    // Memeriksa status PO
     expect($purchaseOrders->fresh()->status)
         ->toBe(PurchaseOrderStatus::COMPLETED);
 });
 
-test('checker can view completed goods receipt details', function () {
+test('checker dapat melihat detail penerimaan barang yang sudah selesai', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -358,7 +357,7 @@ test('checker can view completed goods receipt details', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -403,8 +402,8 @@ test('checker can view completed goods receipt details', function () {
         ]);
 });
 
-// Group 2: Access Control & Security Tests
-test('admin can view all goods receipts', function () {
+// Grup 2: Kontrol Akses & Keamanan
+test('admin dapat melihat semua penerimaan barang', function () {
     Filament::setCurrentPanel('admin');
     actingAs($this->admin);
 
@@ -451,7 +450,7 @@ test('admin can view all goods receipts', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -486,7 +485,7 @@ test('admin can view all goods receipts', function () {
         ->assertCanSeeTableRecords([$gr]);
 });
 
-test('supplier can view processed shipment status', function () {
+test('supplier dapat melihat status shipment yang sudah diproses', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -534,7 +533,7 @@ test('supplier can view processed shipment status', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -568,7 +567,7 @@ test('supplier can view processed shipment status', function () {
     expect($shipment->fresh()->status)->toBe(ShipmentStatus::PROCESSED);
 });
 
-test('checker cannot edit completed goods receipt', function () {
+test('checker tidak dapat mengedit penerimaan barang yang sudah selesai', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -615,7 +614,7 @@ test('checker cannot edit completed goods receipt', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -651,8 +650,8 @@ test('checker cannot edit completed goods receipt', function () {
         ->assertForbidden();
 });
 
-// Group 3: Validation & Error Handling Tests
-test('system prevents over-receipt of PO quantities', function () {
+// Grup 3: Validasi & Penanganan Error
+test('sistem mencegah penerimaan barang melebihi kuantitas PO', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -712,7 +711,7 @@ test('system prevents over-receipt of PO quantities', function () {
         ->assertHasFormErrors(['details.0.quantity_received']);
 });
 
-test('system validates quantity inputs', function () {
+test('sistem memvalidasi input kuantitas', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -772,7 +771,7 @@ test('system validates quantity inputs', function () {
         ->assertHasFormErrors(['details.0.quantity_received', 'details.0.quantity_accepted']);
 });
 
-test('system requires mandatory fields', function () {
+test('sistem mewajibkan field yang harus diisi', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -787,8 +786,8 @@ test('system requires mandatory fields', function () {
         ]);
 });
 
-// Group 4: Integration & System Impact Tests
-test('product stock increases after goods receipt completion', function () {
+// Grup 4: Integrasi & Dampak Sistem
+test('stok produk bertambah setelah penerimaan barang selesai', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
 
@@ -833,7 +832,7 @@ test('product stock increases after goods receipt completion', function () {
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -857,11 +856,11 @@ test('product stock increases after goods receipt completion', function () {
         ->callAction('verify')
         ->callAction('complete');
 
-    // Check stock increased
+    // Memeriksa stok bertambah
     expect($products->fresh()->stock_quantity)->toBe(25);
 });
 
-test('shipment status changes to processed after goods receipt completion', function () {
+test('status shipment berubah menjadi processed setelah penerimaan barang selesai', function () {
     Filament::setCurrentPanel('app');
     actingAs($this->checker);
     $products = Product::factory()->for($this->supplier, 'supplier')
@@ -905,7 +904,7 @@ test('shipment status changes to processed after goods receipt completion', func
             'status' => ShipmentStatus::ARRIVED,
         ]);
 
-    // Create GR for all items
+    // Membuat GR untuk semua barang
     $gr = GoodsReceipt::factory()
         ->for($shipment)
         ->for($purchaseOrders)
@@ -929,6 +928,6 @@ test('shipment status changes to processed after goods receipt completion', func
         ->callAction('verify')
         ->callAction('complete');
 
-    // Check shipment status
+    // Memeriksa status shipment
     expect($shipment->fresh()->status)->toBe(ShipmentStatus::PROCESSED);
 });

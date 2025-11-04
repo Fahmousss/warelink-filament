@@ -19,7 +19,7 @@ beforeEach(function () {
     ]);
 });
 
-test('checker can view shipment but cannot modify purchase order', function () {
+test('checker dapat melihat shipment tetapi tidak dapat mengubah purchase order', function () {
     $this->actingAs($this->checker);
 
     Filament::setCurrentPanel(Filament::getPanel('app'));
@@ -28,20 +28,20 @@ test('checker can view shipment but cannot modify purchase order', function () {
         ->for(Supplier::factory(), 'supplier')->create();
 
     $shipments = Shipment::factory()->for($purchaseOrders, 'purchaseOrder')->for(Supplier::factory(), 'supplier')->create();
-    // Can view list
+    // Dapat melihat daftar
     livewire(ListShipments::class)
         ->assertCanSeeTableRecords([$shipments])
         ->assertActionHidden(TestAction::make('edit')->table($purchaseOrders))
         ->assertActionHidden(TestAction::make('delete')->table($purchaseOrders));
 
-    // Cannot access edit page
+    // Tidak dapat mengakses halaman edit
     livewire(EditPurchaseOrder::class, [
         'record' => $purchaseOrders->id,
     ])
         ->assertForbidden();
 });
 
-test('checker cannot create purchase orders', function () {
+test('checker tidak dapat membuat purchase order', function () {
     $this->actingAs($this->checker);
 
     Filament::setCurrentPanel(Filament::getPanel('app'));

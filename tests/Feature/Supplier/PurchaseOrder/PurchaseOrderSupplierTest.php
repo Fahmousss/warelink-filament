@@ -20,22 +20,22 @@ beforeEach(function () {
     ]);
 });
 
-test('supplier can only view their purchase orders', function () {
+test('supplier hanya dapat melihat purchase order mereka sendiri', function () {
     $otherSupplier = Supplier::factory()->create(['code' => '1']);
     $this->actingAs($this->supplierUser);
 
     Filament::setCurrentPanel(Filament::getPanel('supplier'));
     Filament::setTenant($this->supplier);
 
-    // Create POs for another supplier
+    // Membuat PO untuk supplier lain
     $otherPOs = PurchaseOrder::factory(2)->for($otherSupplier, 'supplier')->create();
 
-    // Create POs for the supplier
+    // Membuat PO untuk supplier ini
     $supplierPOs = PurchaseOrder::factory(3)->create([
         'supplier_id' => $this->supplier->id,
     ]);
 
-    // Trashed PO
+    // PO yang dihapus
     $trashedSupplierPOs = PurchaseOrder::factory(3)->trashed()->create([
         'supplier_id' => $this->supplier->id,
     ]);
@@ -43,11 +43,10 @@ test('supplier can only view their purchase orders', function () {
     livewire(ListPurchaseOrders::class)
         ->loadTable()
         ->assertCanSeeTableRecords($supplierPOs)
-        // ->assertCanNotSeeTableRecords($otherPOs)
         ->assertCanNotSeeTableRecords($trashedSupplierPOs);
 });
 
-test('supplier cannot access unauthorized purchase orders', function () {
+test('supplier tidak dapat mengakses purchase order yang tidak berwenang', function () {
     $this->actingAs($this->supplierUser);
 
     Filament::setCurrentPanel(Filament::getPanel('supplier'));
@@ -59,7 +58,7 @@ test('supplier cannot access unauthorized purchase orders', function () {
         ->assertNotFound();
 });
 
-test('supplier can create shipment from purchase order', function () {
+test('supplier dapat membuat shipment dari purchase order', function () {
     $this->actingAs($this->supplierUser);
 
     Filament::setCurrentPanel(Filament::getPanel('supplier'));
@@ -87,7 +86,7 @@ test('supplier can create shipment from purchase order', function () {
     ]);
 });
 
-test('supplier cannot edit purchase order', function () {
+test('supplier tidak dapat mengedit purchase order', function () {
     $this->actingAs($this->supplierUser);
 
     Filament::setCurrentPanel(Filament::getPanel('supplier'));

@@ -20,7 +20,7 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
-// Test Setup
+// Setup Test
 beforeEach(function () {
     $this->supplier = SupplierModel::factory()->create();
     $this->supplierUser = User::factory()->create([
@@ -34,7 +34,7 @@ beforeEach(function () {
 
 // ===== RBAC Tests =====
 
-test('supplier can create shipment for their own purchase orders', function () {
+test('supplier dapat membuat shipment untuk purchase order mereka sendiri', function () {
     $undoRepeaterFake = Repeater::fake();
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
@@ -79,27 +79,27 @@ test('supplier can create shipment for their own purchase orders', function () {
     ]);
 });
 
-test('supplier cannot create shipment for another suppliers purchase order', function () {
+test('supplier tidak dapat membuat shipment untuk purchase order supplier lain', function () {
     $otherSupplier = SupplierModel::factory()->create();
     $purchaseOrder = PurchaseOrder::factory()
         ->for($otherSupplier)
         ->create(['status' => PurchaseOrderStatus::PENDING]);
 
-    // Verify via policy that supplier cannot access other supplier's PO
+    // Memverifikasi melalui policy bahwa supplier tidak dapat mengakses PO supplier lain
     expect($this->supplierUser->can('view', $purchaseOrder))->toBeFalse();
 
-    // In the actual UI, the dropdown query constraints prevent seeing other supplier's POs
-    // This is handled by the relationship query in the form
+    // Di UI sebenarnya, query constraints pada dropdown mencegah melihat PO supplier lain
+    // Ini ditangani oleh query relationship pada form
 });
 
-test('supplier can only view their own shipments', function () {
+test('supplier hanya dapat melihat shipment mereka sendiri', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
 
     $otherSupplier = SupplierModel::factory()->create();
 
-    // Create shipments for both suppliers
+    // Membuat shipment untuk kedua supplier
     $myShipment = Shipment::factory()
         ->for($this->supplier)
         ->for(PurchaseOrder::factory()->for($this->supplier))
@@ -110,18 +110,18 @@ test('supplier can only view their own shipments', function () {
         ->for(PurchaseOrder::factory()->for($otherSupplier))
         ->create();
 
-    // Verify via policy
+    // Memverifikasi melalui policy
     expect($this->supplierUser->can('view', $myShipment))->toBeTrue();
     expect($this->supplierUser->can('view', $otherShipment))->toBeFalse();
 
-    // The tenant system automatically filters records in the UI
-    // So the list will only show $myShipment
+    // Sistem tenant secara otomatis memfilter records di UI
+    // Jadi daftar hanya akan menampilkan $myShipment
     livewire(ListShipments::class)
         ->loadTable()
         ->assertCanSeeTableRecords([$myShipment]);
 });
 
-test('supplier can only edit draft shipments', function () {
+test('supplier hanya dapat mengedit shipment dengan status draft', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -136,15 +136,15 @@ test('supplier can only edit draft shipments', function () {
         ->for(PurchaseOrder::factory()->for($this->supplier))
         ->create(['status' => ShipmentStatus::SHIPPED]);
 
-    // Can edit draft
+    // Dapat mengedit draft
     livewire(EditShipment::class, ['record' => $draftShipment->id])
         ->assertSuccessful();
 
-    // Cannot edit shipped (view-only or forbidden depending on policy)
-    // The policy allows update only for draft shipments
+    // Tidak dapat mengedit shipped (view-only atau forbidden tergantung policy)
+    // Policy hanya memperbolehkan update untuk shipment draft
 });
 
-test('supplier can only delete draft shipments', function () {
+test('supplier hanya dapat menghapus shipment dengan status draft', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -159,14 +159,14 @@ test('supplier can only delete draft shipments', function () {
         ->for(PurchaseOrder::factory()->for($this->supplier))
         ->create(['status' => ShipmentStatus::SHIPPED]);
 
-    // Check policy allows deletion of draft
+    // Memeriksa policy memperbolehkan penghapusan draft
     expect($this->supplierUser->can('delete', $draftShipment))->toBeTrue();
 
-    // Check policy prevents deletion of shipped
+    // Memeriksa policy mencegah penghapusan shipped
     expect($this->supplierUser->can('delete', $shippedShipment))->toBeFalse();
 });
 
-test('admin and checker can view all shipments', function () {
+test('admin dan checker dapat melihat semua shipment', function () {
     actingAs($this->admin);
     Filament::setCurrentPanel('admin');
 
@@ -179,9 +179,9 @@ test('admin and checker can view all shipments', function () {
     expect($this->checker->can('viewAny', Shipment::class))->toBeTrue();
 });
 
-// ===== Workflow Validation Tests =====
+// ===== Validasi Workflow =====
 
-test('cannot create shipment for completed purchase order', function () {
+test('tidak dapat membuat shipment untuk purchase order yang sudah selesai', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -190,7 +190,7 @@ test('cannot create shipment for completed purchase order', function () {
         ->for($this->supplier)
         ->create(['status' => PurchaseOrderStatus::COMPLETED]);
 
-    // The form query should prevent this, but let's test
+    // Form query seharusnya mencegah ini, tapi mari kita test
     livewire(CreateShipment::class)
         ->fillForm([
             'purchase_order_id' => $completedPO->id,
@@ -203,7 +203,7 @@ test('cannot create shipment for completed purchase order', function () {
         ->assertHasFormErrors();
 });
 
-test('cannot create shipment for cancelled purchase order', function () {
+test('tidak dapat membuat shipment untuk purchase order yang dibatalkan', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -224,9 +224,9 @@ test('cannot create shipment for cancelled purchase order', function () {
         ->assertHasFormErrors();
 });
 
-// ===== Status Transition Tests =====
+// ===== Transisi Status =====
 
-test('shipment status transitions from draft to shipped', function () {
+test('status shipment bertransisi dari draft ke shipped', function () {
     $shipment = Shipment::factory()
         ->for($this->supplier)
         ->for(PurchaseOrder::factory()->for($this->supplier))
@@ -240,7 +240,7 @@ test('shipment status transitions from draft to shipped', function () {
     expect($shipment->fresh()->isShipped())->toBeTrue();
 });
 
-test('shipment status transitions from shipped to arrived', function () {
+test('status shipment bertransisi dari shipped ke arrived', function () {
     $shipment = Shipment::factory()
         ->for($this->supplier)
         ->for(PurchaseOrder::factory()->for($this->supplier))
@@ -254,7 +254,7 @@ test('shipment status transitions from shipped to arrived', function () {
     expect($shipment->fresh()->isArrived())->toBeTrue();
 });
 
-test('shipment status transitions from arrived to processed', function () {
+test('status shipment bertransisi dari arrived ke processed', function () {
     $shipment = Shipment::factory()
         ->for($this->supplier)
         ->for(PurchaseOrder::factory()->for($this->supplier))
@@ -268,9 +268,9 @@ test('shipment status transitions from arrived to processed', function () {
     expect($shipment->fresh()->isProcessed())->toBeTrue();
 });
 
-// ===== Validation Tests =====
+// ===== Validasi =====
 
-test('shipment requires at least one product', function () {
+test('shipment memerlukan setidaknya satu produk', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -292,7 +292,7 @@ test('shipment requires at least one product', function () {
         ->assertHasFormErrors(['details']);
 });
 
-test('shipment estimated arrival must be after shipping date', function () {
+test('estimasi kedatangan shipment harus setelah tanggal pengiriman', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
@@ -321,7 +321,7 @@ test('shipment estimated arrival must be after shipping date', function () {
         ->assertHasFormErrors(['estimated_arrival_date']);
 });
 
-test('shipment cannot have duplicate products', function () {
+test('shipment tidak boleh memiliki produk duplikat', function () {
     actingAs($this->supplierUser);
     Filament::setCurrentPanel('supplier');
     Filament::setTenant($this->supplier);
