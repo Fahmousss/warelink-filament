@@ -1,0 +1,210 @@
+@startuml Master Data Management
+
+title Activity Diagram - Mengelola Master Data (Admin Gudang)
+
+|Admin Gudang|
+start
+:Akses menu master data;
+:Pilih jenis data yang akan dikelola;
+
+split
+  :Manajemen Pengguna;
+  :Pilih aksi (Tambah/Edit/Hapus/Lihat);
+
+  if (Aksi yang dipilih?) then (Tambah/Edit)
+    :Input data pengguna\n(nama, email, phone, role, supplier);
+
+    |System|
+    :Validasi data;
+
+    if (Data valid?) then (Ya)
+      if (Role = Supplier?) then (Ya)
+        :Assign supplier ke user;
+      else (Tidak)
+      endif
+
+      :Simpan data pengguna;
+
+      if (User baru?) then (Ya)
+        :Set status aktif;
+      else (Edit)
+      endif
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      |Admin Gudang|
+      :Tampilkan pesan error validasi;
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Hapus)
+    :Konfirmasi penghapusan;
+
+    if (Konfirmasi?) then (Ya)
+      |System|
+      :Soft delete user;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Lihat)
+    |System|
+    :Tampilkan daftar pengguna;
+    :Filter berdasarkan role/status;
+  endif
+
+split again
+  |Admin Gudang|
+  :Manajemen Supplier;
+  :Pilih aksi (Tambah/Edit/Hapus/Lihat);
+
+  if (Aksi yang dipilih?) then (Tambah)
+    :Input data supplier\n(nama, email, phone, alamat,\nkota, negara, tax number);
+
+    |System|
+    :Generate kode supplier otomatis;
+    :Validasi data;
+
+    if (Data valid?) then (Ya)
+      :Set status aktif;
+      :Simpan data supplier;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      |Admin Gudang|
+      :Tampilkan pesan error validasi;
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Edit)
+    :Pilih supplier;
+    :Update data supplier;
+
+    |System|
+    :Validasi data;
+
+    if (Data valid?) then (Ya)
+      :Simpan perubahan;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      |Admin Gudang|
+      :Tampilkan pesan error validasi;
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Hapus)
+    :Pilih supplier;
+    :Konfirmasi penghapusan;
+
+    if (Konfirmasi?) then (Ya)
+      |System|
+      :Soft delete supplier;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Lihat)
+    |System|
+    :Tampilkan daftar supplier;
+    :Filter supplier aktif/non-aktif;
+  endif
+
+split again
+  |Admin Gudang|
+  :Manajemen Produk;
+  :Pilih aksi (Tambah/Edit/Hapus/Lihat);
+
+  if (Aksi yang dipilih?) then (Tambah)
+    :Input data produk\n(nama, deskripsi, unit,\nstok, minimum stok, supplier);
+
+    |System|
+    :Generate kode produk otomatis\nberdasarkan kode supplier;
+    :Validasi data;
+
+    if (Data valid?) then (Ya)
+      :Set status aktif;
+      :Set jumlah stok awal;
+      :Catat pergerakan stok (initial stock);
+      :Simpan data produk;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      |Admin Gudang|
+      :Tampilkan pesan error validasi;
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Edit)
+    :Pilih produk;
+    :Update data produk;
+
+    |System|
+    if (Stok berubah?) then (Ya)
+      if (Stok bertambah?) then (Ya)
+        :Tambah stok dengan alasan;
+        :Catat pergerakan stok (increase);
+      else (Berkurang)
+        :Kurangi stok dengan alasan;
+        :Catat pergerakan stok (decrease);
+      endif
+    else (Tidak)
+    endif
+
+    :Validasi data;
+
+    if (Data valid?) then (Ya)
+      :Simpan perubahan;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      |Admin Gudang|
+      :Tampilkan pesan error validasi;
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Hapus)
+    :Pilih produk;
+    :Konfirmasi penghapusan;
+
+    if (Konfirmasi?) then (Ya)
+      |System|
+      :Soft delete produk;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      stop
+    endif
+
+  elseif (Aksi yang dipilih?) then (Lihat)
+    |System|
+    :Tampilkan daftar produk;
+    :Filter berdasarkan\n(supplier, stok rendah,\nstok habis, perlu reorder);
+
+    floating note right
+      Produk dapat difilter berdasarkan:
+      - Status aktif
+      - Stok rendah (< minimum)
+      - Stok habis
+      - Stok baik
+      - Perlu reorder
+      - Berdasarkan supplier
+    end note
+  endif
+end split
+
+stop
+
+@enduml

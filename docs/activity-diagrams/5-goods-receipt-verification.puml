@@ -1,0 +1,153 @@
+@startuml Goods Receipt Verification
+
+title Activity Diagram - Memverifikasi & Menyelesaikan Penerimaan Barang (Admin Gudang)
+
+|Admin Gudang|
+start
+:Terima notifikasi\nGoods Receipt baru;
+:Akses menu Goods Receipt;
+
+|System|
+:Lihat daftar Goods Receipt\ndengan status "Pending";
+
+|Admin Gudang|
+:Filter berdasarkan tanggal/supplier;
+:Pilih Goods Receipt untuk diverifikasi;
+
+|System|
+:Lihat detail Goods Receipt:
+- Nomor GRN
+- Purchase Order
+- Shipment/Delivery Order
+- Supplier
+- Tanggal penerimaan
+- Checker yang menerima
+- Detail produk
+- Jumlah dikirim vs diterima vs ditolak
+- Alasan penolakan (jika ada)
+- Dokumen POD scan;
+
+|Admin Gudang|
+:Download dan periksa dokumen POD;
+:Verifikasi data penerimaan\ndengan dokumen fisik;
+
+if (Data sesuai dan akurat?) then (Ya)
+  :Klik "Verifikasi Penerimaan";
+  :Konfirmasi verifikasi;
+
+  if (Konfirmasi?) then (Ya)
+    |System|
+    :Ubah status Goods Receipt = Verified;
+    :Simpan perubahan;
+
+    |Admin Gudang|
+    :Tampilkan notifikasi\n"Penerimaan berhasil diverifikasi";
+    :Pilih untuk menyelesaikan penerimaan;
+
+    if (Lanjut selesaikan penerimaan?) then (Ya)
+      :Klik "Selesaikan Penerimaan";
+      :Konfirmasi penyelesaian;
+
+      if (Konfirmasi?) then (Ya)
+        |System|
+        :Ubah status Goods Receipt = Completed;
+
+        repeat
+          :Ambil setiap detail produk;
+
+          if (Jumlah diterima > 0?) then (Ya)
+            :Tambah stok produk\nsesuai jumlah yang diterima;
+            :Catat pergerakan stok\n(type: increase,\nreason: goods receipt);
+          else (Tidak)
+          endif
+
+          if (Jumlah ditolak > 0?) then (Ya)
+            :Catat produk yang ditolak;
+            :Simpan alasan penolakan;
+          else (Tidak)
+          endif
+        repeat while (Ada produk lain?) is (Ya)
+        ->Tidak;
+
+        :Update jumlah diterima\npada Purchase Order Detail;
+        :Hitung total jumlah diterima\nuntuk setiap produk di PO;
+        :Cek status Purchase Order;
+
+        if (Semua produk sudah diterima lengkap?) then (Ya)
+          :Ubah status PO = Completed;
+        else (Sebagian diterima)
+          :Ubah status PO = Partial;
+        endif
+
+        :Simpan perubahan PO;
+        :Update status Shipment = Processed;
+        :Simpan perubahan Shipment;
+        :Kirim notifikasi ke Accounting\nuntuk pembuatan laporan;
+
+        if (Ada produk yang ditolak?) then (Ya)
+          :Kirim notifikasi ke Supplier\ndengan detail penolakan;
+        else (Tidak)
+        endif
+
+        |Admin Gudang|
+        :Tampilkan notifikasi sukses\n"Penerimaan barang selesai diproses";
+
+        |System|
+        :Tampilkan ringkasan:
+        - Stok yang berhasil ditambahkan
+        - Produk yang ditolak
+        - Status PO terupdate;
+      else (Tidak)
+        stop
+      endif
+    else (Tidak)
+      floating note right
+        Admin bisa menyelesaikan
+        penerimaan nanti
+      end note
+      stop
+    endif
+  else (Tidak)
+    stop
+  endif
+else (Tidak)
+  :Identifikasi ketidaksesuaian;
+
+  if (Jenis masalah?) then (Data tidak akurat)
+    :Kembalikan ke Checker\nuntuk koreksi;
+    :Input catatan koreksi yang diperlukan;
+
+    |System|
+    :Kirim notifikasi ke Checker;
+    stop
+  elseif (Jenis masalah?) then (Dokumen tidak lengkap)
+    |Admin Gudang|
+    :Hubungi Supplier\nuntuk kelengkapan dokumen;
+    :Input catatan masalah dokumen;
+
+    |System|
+    :Status tetap Pending;
+    stop
+  else (Produk bermasalah)
+    |Admin Gudang|
+    :Update detail penerimaan\ndengan catatan tambahan;
+    :Koordinasi dengan Supplier;
+
+    |System|
+    :Status tetap Pending;
+    stop
+  endif
+endif
+
+floating note right
+  Setelah Goods Receipt Completed:
+  1. Stok produk terupdate otomatis
+  2. Purchase Order status terupdate
+  3. Shipment status = Processed
+  4. Pergerakan stok tercatat
+  5. Notifikasi terkirim ke pihak terkait
+end note
+
+stop
+
+@enduml

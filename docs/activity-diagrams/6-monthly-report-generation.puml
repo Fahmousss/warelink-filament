@@ -1,0 +1,177 @@
+@startuml Monthly Report Generation
+
+title Activity Diagram - Membuat Laporan Bulanan (Accounting)
+
+|Accounting|
+start
+:Akses menu Laporan;
+:Pilih "Buat Laporan Bulanan";
+:Pilih periode laporan\n(bulan dan tahun);
+:Pilih jenis laporan;
+
+if (Jenis laporan?) then (Laporan Purchase Order)
+  |System|
+  :Query data Purchase Order\nberdasarkan periode;
+  :Filter PO dengan tanggal order\ndalam periode yang dipilih;
+  :Kelompokkan berdasarkan:
+  - Status (Pending, Partial, Completed, Cancelled)
+  - Supplier;
+  :Hitung total PO per status;
+  :Hitung total amount per status;
+  :Hitung total amount keseluruhan;
+  :Hitung rata-rata nilai PO;
+  :Identifikasi top suppliers\nberdasarkan nilai transaksi;
+  :Generate grafik dan chart:
+  - Trend PO per minggu
+  - Distribusi per supplier
+  - Status breakdown;
+
+  |Accounting|
+  :Tampilkan laporan Purchase Order:
+  - Total PO
+  - Breakdown per status
+  - Total nilai transaksi
+  - Top suppliers
+  - Grafik trend;
+
+elseif (Jenis laporan?) then (Laporan Penerimaan Barang)
+  |System|
+  :Query data Goods Receipt\nberdasarkan periode;
+  :Filter GR dengan tanggal penerimaan\ndalam periode yang dipilih;
+  :Kelompokkan berdasarkan:
+  - Status (Pending, Verified, Completed)
+  - Supplier
+  - Produk;
+  :Hitung total penerimaan;
+  :Hitung total produk diterima;
+  :Hitung total produk ditolak;
+  :Hitung acceptance rate\n(diterima / total × 100%);
+  :Identifikasi produk dengan\ntingkat penolakan tertinggi;
+  :Identifikasi supplier dengan\nperforma terbaik dan terburuk;
+  :Generate grafik:
+  - Trend penerimaan per minggu
+  - Acceptance rate per supplier
+  - Top rejected products;
+
+  |Accounting|
+  :Tampilkan laporan Penerimaan:
+  - Total penerimaan
+  - Acceptance rate
+  - Produk diterima vs ditolak
+  - Supplier performance
+  - Grafik trend;
+
+elseif (Jenis laporan?) then (Laporan Stok Produk)
+  |System|
+  :Query data Product\nsaat ini;
+  :Query pergerakan stok\ndalam periode;
+  :Kelompokkan berdasarkan:
+  - Supplier
+  - Status stok (Low, Out, Good);
+  :Hitung total produk aktif;
+  :Hitung produk dengan stok rendah;
+  :Hitung produk kehabisan stok;
+  :Hitung produk perlu reorder;
+  :Hitung pergerakan stok:
+  - Total masuk (dari GR)
+  - Total keluar
+  - Produk paling aktif;
+  :Hitung projected stock\nberdasarkan PO pending;
+  :Generate grafik:
+  - Distribusi stok per supplier
+  - Top moving products
+  - Reorder urgency chart;
+
+  |Accounting|
+  :Tampilkan laporan Stok:
+  - Status stok overview
+  - Produk perlu reorder
+  - Pergerakan stok
+  - Projected stock
+  - Grafik trend;
+
+elseif (Jenis laporan?) then (Laporan Keuangan)
+  |System|
+  :Query data Purchase Order\ndengan status Completed;
+  :Query data Goods Receipt\ndengan status Completed;
+  :Hitung total pengeluaran\ndari PO yang completed;
+  :Kelompokkan pengeluaran per:
+  - Supplier
+  - Kategori produk
+  - Minggu/bulan;
+  :Hitung outstanding amount\ndari PO Partial dan Pending;
+  :Hitung rata-rata nilai transaksi;
+  :Identifikasi top spending suppliers;
+  :Generate grafik:
+  - Spending trend
+  - Supplier breakdown
+  - Outstanding vs Paid;
+
+  |Accounting|
+  :Tampilkan laporan Keuangan:
+  - Total pengeluaran
+  - Outstanding amount
+  - Breakdown per supplier
+  - Spending trend
+  - Grafik;
+endif
+
+:Review laporan;
+
+if (Perlu filter tambahan?) then (Ya)
+  :Pilih filter tambahan:
+  - Supplier tertentu
+  - Produk tertentu
+  - Status tertentu
+  - Range tanggal khusus;
+
+  |System|
+  :Filter ulang data;
+  :Generate ulang laporan;
+
+  |Accounting|
+  :Tampilkan laporan terfilter;
+else (Tidak)
+endif
+
+if (Perlu export laporan?) then (Ya)
+  :Pilih format export:
+  - PDF
+  - Excel
+  - CSV;
+
+  |System|
+  :Generate file laporan\nsesuai format;
+  :Download file;
+
+  |Accounting|
+  :Simpan file laporan;
+else (Tidak)
+endif
+
+if (Perlu cetak laporan?) then (Ya)
+  :Klik tombol Print;
+
+  |System|
+  :Preview cetak;
+
+  |Accounting|
+  :Cetak laporan;
+else (Tidak)
+endif
+
+:Laporan selesai dibuat;
+
+floating note right
+  Laporan dapat mencakup:
+  - Ringkasan eksekutif
+  - Detail transaksi
+  - Analisis performa supplier
+  - Rekomendasi
+  - Grafik dan chart
+  - KPI dashboard
+end note
+
+stop
+
+@enduml

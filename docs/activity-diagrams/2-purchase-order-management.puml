@@ -1,0 +1,148 @@
+@startuml Purchase Order Management
+
+title Activity Diagram - Manajemen Purchase Order (Admin Gudang)
+
+|Admin Gudang|
+start
+:Akses menu Purchase Order;
+:Pilih aksi (Buat/Edit/Lihat/Batalkan);
+
+if (Aksi yang dipilih?) then (Buat PO Baru)
+  :Pilih supplier;
+
+  |System|
+  :Generate nomor PO otomatis;
+
+  |Admin Gudang|
+  :Input tanggal order;
+  :Input estimasi tanggal pengiriman;
+  :Tambah detail produk;
+
+  repeat
+    :Pilih produk dari supplier;
+    :Input jumlah yang dipesan;
+    :Input harga per unit;
+
+    |System|
+    :Hitung subtotal otomatis\n(jumlah × harga);
+
+    |Admin Gudang|
+    :Tambahkan ke daftar detail PO;
+  repeat while (Ada produk lain?) is (Ya)
+  ->Tidak;
+
+  |System|
+  :Hitung total amount\ndari semua detail;
+
+  |Admin Gudang|
+  :Input catatan (opsional);
+
+  |System|
+  :Set status = Pending;
+  :Simpan Purchase Order;
+  :Kirim notifikasi ke Supplier;
+
+  |Admin Gudang|
+  :Tampilkan notifikasi sukses;
+
+elseif (Aksi yang dipilih?) then (Edit PO)
+  :Pilih Purchase Order;
+
+  |System|
+  if (Status PO?) then (Pending)
+    |Admin Gudang|
+    :Update data PO\n(tanggal, estimasi pengiriman, catatan);
+
+    if (Edit detail produk?) then (Ya)
+      repeat
+        :Update/Tambah/Hapus detail produk;
+        :Update jumlah/harga;
+
+        |System|
+        :Hitung ulang subtotal;
+      repeat while (Ada perubahan lain?) is (Ya)
+      ->Tidak;
+
+      :Hitung ulang total amount;
+    else (Tidak)
+    endif
+
+    :Simpan perubahan;
+
+    |Admin Gudang|
+    :Tampilkan notifikasi sukses;
+  else (Partial/Completed/Cancelled)
+    |Admin Gudang|
+    :Tampilkan pesan error\n"PO tidak dapat diubah";
+    stop
+  endif
+
+elseif (Aksi yang dipilih?) then (Lihat PO)
+  |System|
+  :Tampilkan daftar Purchase Order;
+  :Filter berdasarkan\n(status, supplier, tanggal);
+
+  floating note right
+    Status PO:
+    - Pending: PO baru dibuat
+    - Partial: Sebagian barang diterima
+    - Completed: Semua barang diterima
+    - Cancelled: PO dibatalkan
+  end note
+
+  |Admin Gudang|
+  :Pilih PO untuk melihat detail;
+
+  |System|
+  :Tampilkan informasi PO:
+  - Nomor PO
+  - Supplier
+  - Tanggal order
+  - Estimasi pengiriman
+  - Status
+  - Total amount
+  - Detail produk
+  - Jumlah dipesan vs diterima
+  - Shipment terkait
+  - Goods Receipt terkait;
+
+elseif (Aksi yang dipilih?) then (Batalkan PO)
+  :Pilih Purchase Order;
+
+  |System|
+  if (Status PO?) then (Pending)
+    |Admin Gudang|
+    :Konfirmasi pembatalan;
+
+    if (Konfirmasi?) then (Ya)
+      |System|
+      :Set status = Cancelled;
+      :Simpan perubahan;
+      :Kirim notifikasi ke Supplier;
+
+      |Admin Gudang|
+      :Tampilkan notifikasi sukses;
+    else (Tidak)
+      stop
+    endif
+  elseif (Status PO?) then (Partial)
+    |Admin Gudang|
+    :Tampilkan pesan error\n"PO sudah dalam proses pengiriman";
+    stop
+  else (Completed/Cancelled)
+    |Admin Gudang|
+    :Tampilkan pesan error\n"PO tidak dapat dibatalkan";
+    stop
+  endif
+endif
+
+floating note left
+  Sistem otomatis update status PO:
+  - Ketika Goods Receipt dibuat → cek jumlah diterima
+  - Jika semua item diterima → status = Completed
+  - Jika sebagian diterima → status = Partial
+end note
+
+stop
+
+@enduml

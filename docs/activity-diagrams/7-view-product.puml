@@ -1,0 +1,151 @@
+@startuml View Product
+
+title Activity Diagram - Melihat Produk (Supplier)
+
+|Supplier|
+start
+:Login ke sistem;
+:Akses menu Produk;
+
+|System|
+:Tampilkan daftar produk\nmilik supplier sendiri;
+
+floating note right
+  Sistem otomatis filter produk
+  berdasarkan supplier_id
+  dari user yang login
+end note
+
+:Lihat daftar produk dengan informasi:
+- Kode produk
+- Nama produk
+- Deskripsi
+- Unit
+- Jumlah stok
+- Minimum stok
+- Status aktif;
+
+|Supplier|
+if (Ingin filter produk?) then (Ya)
+  :Pilih filter;
+
+  if (Filter berdasarkan?) then (Status Stok)
+    :Pilih filter:
+    - Stok rendah
+    - Stok habis
+    - Stok baik
+    - Perlu reorder;
+
+    |System|
+    :Filter produk berdasarkan kondisi stok;
+
+    |Supplier|
+    :Tampilkan produk terfilter;
+  elseif (Filter berdasarkan?) then (Status Aktif)
+    :Pilih:
+    - Produk aktif
+    - Produk non-aktif;
+
+    |System|
+    :Filter produk berdasarkan is_active;
+
+    |Supplier|
+    :Tampilkan produk terfilter;
+  elseif (Filter berdasarkan?) then (Pencarian)
+    :Input keyword\n(nama/kode produk);
+
+    |System|
+    :Cari produk berdasarkan keyword;
+
+    |Supplier|
+    :Tampilkan hasil pencarian;
+  endif
+else (Tidak)
+endif
+
+:Pilih produk untuk melihat detail;
+
+|System|
+:Tampilkan detail produk lengkap:
+- Informasi dasar
+- Kode produk
+- Nama lengkap
+- Deskripsi detail
+- Unit pengukuran
+- Supplier info;
+
+:Tampilkan informasi stok:
+- Jumlah stok saat ini
+- Minimum stok
+- Projected stock (termasuk PO pending)
+- Status stok (Low/Out/Good)
+- Perlu reorder atau tidak
+- Suggested reorder quantity
+- Reorder urgency level;
+
+:Tampilkan statistik produk:
+- Total quantity ordered (dari PO)
+- Total quantity received (dari GR)
+- Total quantity rejected (dari GR)
+- Acceptance rate (%)
+- Pending quantity (PO belum diterima);
+
+:Tampilkan riwayat transaksi:
+- Purchase Orders terkait
+- Shipments terkait
+- Goods Receipts terkait;
+
+|Supplier|
+if (Ingin lihat riwayat pergerakan stok?) then (Ya)
+  :Klik "Riwayat Stok";
+
+  |System|
+  :Query stock movement history;
+  :Tampilkan tabel pergerakan stok:
+  - Tanggal
+  - Tipe (Increase/Decrease/Set)
+  - Jumlah
+  - Alasan
+  - Stok sebelum
+  - Stok setelah;
+
+  |Supplier|
+  :Lihat riwayat detail;
+else (Tidak)
+endif
+
+if (Ingin lihat grafik trend?) then (Ya)
+  :Klik "Lihat Trend";
+
+  |System|
+  :Generate grafik:
+  - Trend stok per bulan
+  - Trend order vs received
+  - Acceptance rate trend;
+
+  |Supplier|
+  :Tampilkan grafik dan analisis;
+else (Tidak)
+endif
+
+if (Perlu export data produk?) then (Ya)
+  :Pilih produk yang akan diexport;
+  :Pilih format (Excel/CSV/PDF);
+
+  |System|
+  :Generate file export;
+
+  |Supplier|
+  :Download file;
+else (Tidak)
+endif
+
+floating note right
+  Supplier hanya dapat melihat produk
+  yang terkait dengan supplier mereka.
+  Tidak bisa edit atau hapus produk.
+end note
+
+stop
+
+@enduml

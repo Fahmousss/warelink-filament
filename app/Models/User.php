@@ -66,9 +66,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Wirechat
         ];
     }
 
-    protected function scopeSupplier(Builder $query): Builder
+    protected function scopeSupplier(Builder $query): void
     {
-        return $query->where('role', \App\Enums\UserRole::Supplier);
+        $query->where('role', \App\Enums\UserRole::Supplier);
     }
 
     public function supplier()
