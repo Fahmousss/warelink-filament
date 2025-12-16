@@ -1,0 +1,115 @@
+@startuml Goods Receipt Creation - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Membuat Penerimaan Barang (Checker)
+
+actor "Checker" as Checker
+participant "Filament UI" as UI
+participant "GR Resource" as Resource
+participant "GoodsReceipt\nModel" as GR
+participant "Shipment\nModel" as Shipment
+participant "Database" as DB
+participant "Notification" as Notif
+
+== Terima Notifikasi ==
+Notif -> Checker: Notifikasi:\n"DO Shipped"
+
+== Lihat Delivery Order ==
+Checker -> UI: Akses menu Delivery Order
+activate UI
+UI -> Resource: Request DO list (status=Shipped)
+activate Resource
+Resource -> DB: Query shipments where status=Shipped
+activate DB
+DB --> Resource: Shipment data
+deactivate DB
+Resource --> UI: DO list
+deactivate Resource
+UI --> Checker: Tampilkan daftar DO (Shipped)
+deactivate UI
+
+Checker -> UI: Pilih Delivery Order
+activate UI
+UI -> Resource: Request DO details
+activate Resource
+Resource -> Shipment: Get shipment with details
+activate Shipment
+Shipment -> DB: Query shipment & dokumen
+activate DB
+DB --> Shipment: Complete data
+deactivate DB
+Shipment --> Resource: Shipment with details
+deactivate Shipment
+Resource --> UI: DO detail & dokumen scan
+deactivate Resource
+UI --> Checker: Tampilkan detail DO & dokumen
+deactivate UI
+
+Checker -> Checker: Verifikasi dokumen DO
+
+alt Dokumen Sesuai
+    == Buat Penerimaan Barang ==
+    Checker -> UI: Klik "Buat Penerimaan Barang"
+    activate UI
+    UI -> Resource: Show GR form
+    activate Resource
+    Resource --> UI: Form penerimaan
+    deactivate Resource
+    UI --> Checker: Tampilkan form
+    deactivate UI
+
+    Checker -> Checker: Periksa kondisi fisik barang
+
+    Checker -> UI: Input data penerimaan:\n- Jumlah diterima & ditolak\n- Alasan penolakan (jika ada)\n- Upload dokumen POD
+    activate UI
+    UI -> Resource: Submit GR data
+    activate Resource
+
+    note right of Resource
+        - Generate nomor GRN
+        - Set status = Pending
+        - Set received_by = Checker
+    end note
+
+    Resource -> GR: Create goods receipt
+    activate GR
+    GR -> DB: Save GR & details
+    activate DB
+    DB --> GR: Success
+    deactivate DB
+    GR --> Resource: GoodsReceipt instance
+    deactivate GR
+
+    Resource -> Shipment: Update status to Arrived
+    activate Shipment
+    Shipment -> DB: Update shipment
+    activate DB
+    DB --> Shipment: Success
+    deactivate DB
+    Shipment --> Resource: Updated
+    deactivate Shipment
+
+    Resource -> Notif: Send notification to Admin Gudang
+    activate Notif
+    Notif --> Resource: Sent
+    deactivate Notif
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Checker: Tampilkan hasil\n"Penerimaan barang created (Pending)"
+    deactivate UI
+else Dokumen Tidak Sesuai
+    Checker -> UI: Tandai dokumen tidak sesuai
+    activate UI
+    UI --> Checker: Error: "Dokumen tidak sesuai"
+    deactivate UI
+
+    Checker -> Checker: Hubungi supplier
+end
+
+@enduml

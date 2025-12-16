@@ -1,0 +1,154 @@
+@startuml Messaging - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Mengirim Pesan (All Users)
+
+actor "User (Sender)" as Sender
+actor "Recipient" as Recipient
+participant "Livewire\nWirechat" as Wirechat
+participant "Chat\nModel" as Chat
+participant "Message\nModel" as Message
+participant "Database" as DB
+participant "Laravel Reverb\n(WebSocket)" as Reverb
+participant "Notification" as Notif
+
+== Akses Chat ==
+Sender -> Wirechat: Akses menu Chat
+activate Wirechat
+Wirechat -> DB: Query user's chats
+activate DB
+DB --> Wirechat: Chat list
+deactivate DB
+Wirechat --> Sender: Tampilkan daftar chat
+deactivate Wirechat
+
+== Buat Chat Baru (Private) ==
+Sender -> Wirechat: Klik "Buat Chat" → Private
+activate Wirechat
+
+note right of Wirechat
+    Check permission:
+    canCreateChats()
+end note
+
+Wirechat -> DB: Check existing chat\nor create new
+activate DB
+DB --> Wirechat: Chat instance
+deactivate DB
+Wirechat --> Sender: Open chat interface
+deactivate Wirechat
+
+== Buat Group Chat ==
+Sender -> Wirechat: Klik "Buat Chat" → Group
+activate Wirechat
+
+note right of Wirechat
+    Check permission:
+    canCreateGroups
+end note
+
+Wirechat -> Chat: Create group chat\nwith participants
+activate Chat
+Chat -> DB: Save group & members
+activate DB
+DB --> Chat: Success
+deactivate DB
+Chat --> Wirechat: Group created
+deactivate Chat
+
+Wirechat -> Notif: Notify all members
+activate Notif
+Notif --> Wirechat: Sent
+deactivate Notif
+
+Wirechat --> Sender: Open group chat
+deactivate Wirechat
+
+== Buka Chat Existing ==
+Sender -> Wirechat: Pilih chat dari list
+activate Wirechat
+Wirechat -> Message: Get chat messages
+activate Message
+Message -> DB: Query messages
+activate DB
+DB --> Message: Message history
+deactivate DB
+Message --> Wirechat: Messages
+deactivate Message
+
+Wirechat -> Message: Mark as read
+activate Message
+Message -> DB: Update read_at
+activate DB
+DB --> Message: Success
+deactivate DB
+Message --> Wirechat: Updated
+deactivate Message
+
+Wirechat --> Sender: Tampilkan riwayat pesan
+deactivate Wirechat
+
+== Kirim Pesan ==
+Sender -> Wirechat: Tulis & kirim pesan
+activate Wirechat
+Wirechat -> Message: Create message
+activate Message
+Message -> DB: Save message
+activate DB
+DB --> Message: Success
+deactivate DB
+Message --> Wirechat: Message instance
+deactivate Message
+
+Wirechat -> Reverb: Broadcast message\nvia WebSocket
+activate Reverb
+Reverb -> Recipient: Push real-time message
+Reverb --> Wirechat: Broadcasted
+deactivate Reverb
+
+Wirechat -> Notif: Send push notification\nto offline recipients
+activate Notif
+Notif --> Wirechat: Sent
+deactivate Notif
+
+Wirechat --> Sender: Message sent
+deactivate Wirechat
+
+== Terima Pesan (Real-time) ==
+Reverb -> Recipient: Real-time message delivery
+activate Recipient
+
+alt Chat is Open
+    Recipient -> Wirechat: Display new message
+    activate Wirechat
+    Wirechat -> Message: Mark as read
+    activate Message
+    Message -> DB: Update read_at
+    activate DB
+    DB --> Message: Success
+    deactivate DB
+    Message --> Wirechat: Updated
+    deactivate Message
+
+    Wirechat -> Reverb: Send read receipt
+    activate Reverb
+    Reverb -> Sender: Notify message read
+    deactivate Reverb
+
+    Wirechat --> Recipient: Show message
+    deactivate Wirechat
+else Chat Not Open
+    Recipient -> Wirechat: Increment unread counter
+    activate Wirechat
+    Wirechat --> Recipient: Show notification\n& unread badge
+    deactivate Wirechat
+end
+
+deactivate Recipient
+
+@enduml

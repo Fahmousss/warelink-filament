@@ -1,127 +1,62 @@
 @startuml Goods Receipt Creation
 
+skinparam defaultFontName Times New Roman
+skinparam activityFontName Times New Roman
+skinparam activityArrowFontName Times New Roman
+skinparam partitionFontName Times New Roman
+skinparam swimlane {
+  BorderColor #444444
+  TitleBackgroundColor #EEEEEE
+}
+skinparam activity {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  FontColor #000000
+}
+skinparam arrow {
+  Color #A80036
+  FontColor #000000
+}
+skinparam note {
+  BackgroundColor #FBFB77
+  BorderColor #A80036
+}
+
 title Activity Diagram - Membuat Penerimaan Barang (Checker)
 
-|System|
-start
-:Supplier mengubah status\nshipment menjadi "Shipped";
-:Kirim notifikasi Delivery Order\nke Checker;
-
 |Checker|
-:Terima notifikasi\nDelivery Order baru;
+start
+:Terima notifikasi DO (Shipped);
 :Akses menu Delivery Order;
 
 |System|
-:Lihat daftar Delivery Order\ndengan status "Shipped";
+:Tampilkan daftar DO (Shipped);
 
 |Checker|
-:Filter dan cari DO\nyang akan diterima;
 :Pilih Delivery Order;
-
-|System|
-:Lihat detail Delivery Order:
-- Nomor DO
-- Nomor Shipment
-- Purchase Order terkait
-- Supplier
-- Tanggal pengiriman
-- Estimasi kedatangan
-- Detail produk yang dikirim
-- Jumlah per produk
-- Dokumen DO scan;
-
-|Checker|
-:Verifikasi dokumen DO fisik\ndengan data di sistem;
+:Verifikasi dokumen DO;
 
 if (Dokumen sesuai?) then (Ya)
   :Klik "Buat Penerimaan Barang";
+  :Periksa kondisi fisik barang;
+  :Input jumlah diterima dan ditolak;
+  :Input alasan penolakan (jika ada);
+  :Upload dokumen POD;
 
   |System|
-  :Generate nomor GRN otomatis;
-
-  |Checker|
-  :Input tanggal penerimaan;
-  :Input nomor DO dari dokumen;
-  :Upload scan dokumen POD\n(Proof of Delivery);
-  :Mulai proses pemeriksaan fisik barang;
-
-  repeat
-    :Ambil produk dari daftar;
-    :Periksa kondisi produk secara fisik;
-    :Hitung jumlah barang yang diterima;
-
-    if (Kondisi barang?) then (Baik)
-      :Input jumlah yang diterima = jumlah dikirim;
-
-      |System|
-      :Set jumlah yang diterima = jumlah dikirim;
-      :Set jumlah yang ditolak = 0;
-      :Kosongkan alasan penolakan;
-    else (Rusak/Kurang/Tidak Sesuai)
-      |Checker|
-      :Input jumlah yang diterima (baik);
-      :Input jumlah yang ditolak;
-
-      |System|
-      :Hitung jumlah diterima vs ditolak;
-
-      |Checker|
-      :Input alasan penolakan secara detail;
-
-      floating note right
-        Alasan penolakan bisa:
-        - Barang rusak
-        - Jumlah kurang
-        - Tidak sesuai spesifikasi
-        - Kadaluarsa
-        - dll
-      end note
-    endif
-
-    |System|
-    :Set jumlah diterima pada detail;
-
-    |Checker|
-    :Input catatan tambahan (opsional);
-
-    |System|
-    :Simpan detail penerimaan;
-  repeat while (Ada produk lain?) is (Ya)
-  ->Tidak;
-
-  |Checker|
-  :Input catatan umum penerimaan (opsional);
-
-  |System|
+  :Generate nomor GRN;
   :Set status = Pending;
-  :Set received_by = User login (Checker);
+  :Set received_by = Checker;
   :Simpan Goods Receipt;
   :Update status shipment = Arrived;
-  :Simpan perubahan shipment;
-  :Kirim notifikasi ke Admin Gudang\nuntuk verifikasi;
+  :Kirim notifikasi ke Admin Gudang;
 
   |Checker|
-  :Tampilkan notifikasi sukses\n"Penerimaan barang berhasil dibuat";
-
-  |System|
-  :Tampilkan ringkasan:
-  - Nomor GRN
-  - Total produk diterima
-  - Total produk ditolak
-  - Status: Menunggu Verifikasi;
+  :Tampilkan hasil;
 else (Tidak)
-  |Checker|
-  :Tampilkan pesan error\n"Dokumen tidak sesuai";
-  :Hubungi supplier untuk konfirmasi;
-  stop
+  :Tampilkan error "Dokumen tidak sesuai";
+  :Hubungi supplier;
 endif
-
-floating note right
-  Status Goods Receipt:
-  - Pending: Menunggu verifikasi Admin Gudang
-  - Verified: Sudah diverifikasi, siap update stok
-  - Completed: Penerimaan selesai, stok sudah diupdate
-end note
 
 stop
 

@@ -1,0 +1,188 @@
+@startuml Purchase Order Management - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Manajemen Purchase Order (Admin Gudang)
+
+actor "Admin Gudang" as Admin
+participant "Filament UI" as UI
+participant "PO Resource" as Resource
+participant "PurchaseOrder\nModel" as PO
+participant "Database" as DB
+participant "Notification" as Notif
+
+== Buat PO ==
+Admin -> UI: Akses menu Purchase Order
+activate UI
+UI -> Resource: Request PO list
+activate Resource
+Resource -> PO: Get all POs
+activate PO
+PO -> DB: Query purchase orders
+activate DB
+DB --> PO: Return data
+deactivate DB
+PO --> Resource: Collection<PO>
+deactivate PO
+Resource --> UI: PO list data
+deactivate Resource
+UI --> Admin: Tampilkan daftar PO
+deactivate UI
+
+Admin -> UI: Klik "Buat PO"
+activate UI
+UI -> Resource: Show create form
+activate Resource
+Resource --> UI: Form dengan supplier & produk
+deactivate Resource
+UI --> Admin: Tampilkan form
+deactivate UI
+
+Admin -> UI: Pilih supplier\nInput detail PO\nInput detail produk
+activate UI
+UI -> Resource: Submit PO data
+activate Resource
+
+note right of Resource
+    - Generate nomor PO
+    - Hitung total amount
+    - Set status = Pending
+end note
+
+Resource -> PO: Create PO with details
+activate PO
+PO -> DB: Save PO & details
+activate DB
+DB --> PO: Success
+deactivate DB
+PO --> Resource: PurchaseOrder instance
+deactivate PO
+
+Resource -> Notif: Send notification to Supplier
+activate Notif
+Notif --> Resource: Sent
+deactivate Notif
+
+Resource --> UI: Success response
+deactivate Resource
+UI --> Admin: Tampilkan hasil
+deactivate UI
+
+== Edit PO ==
+Admin -> UI: Pilih Purchase Order\nKlik Edit
+activate UI
+UI -> Resource: Request edit form
+activate Resource
+Resource -> PO: Find PO by ID
+activate PO
+PO -> DB: Query PO
+activate DB
+DB --> PO: PO data
+deactivate DB
+
+alt Status = Pending
+    PO --> Resource: PurchaseOrder instance
+    deactivate PO
+    Resource --> UI: Edit form with data
+    deactivate Resource
+    UI --> Admin: Tampilkan form edit
+    deactivate UI
+
+    Admin -> UI: Update data PO
+    activate UI
+    UI -> Resource: Submit updated data
+    activate Resource
+
+    note right of Resource
+        - Update PO data
+        - Update detail produk
+        - Hitung ulang total amount
+    end note
+
+    Resource -> PO: Update PO
+    activate PO
+    PO -> DB: Save changes
+    activate DB
+    DB --> PO: Success
+    deactivate DB
+    PO --> Resource: Updated instance
+    deactivate PO
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: Tampilkan hasil
+    deactivate UI
+else Status != Pending
+    PO --> Resource: PO not editable
+    deactivate PO
+    Resource --> UI: Error response
+    deactivate Resource
+    UI --> Admin: Tampilkan error\n"PO tidak dapat diubah"
+    deactivate UI
+end
+
+== Lihat PO ==
+Admin -> UI: Pilih PO untuk detail
+activate UI
+UI -> Resource: Request PO details
+activate Resource
+Resource -> PO: Get PO with relations
+activate PO
+PO -> DB: Query with supplier & details
+activate DB
+DB --> PO: Complete data
+deactivate DB
+PO --> Resource: PurchaseOrder with details
+deactivate PO
+Resource --> UI: PO detail data
+deactivate Resource
+UI --> Admin: Tampilkan detail PO
+deactivate UI
+
+== Batalkan PO ==
+Admin -> UI: Pilih PO\nKlik Batalkan
+activate UI
+UI -> Resource: Request cancel
+activate Resource
+Resource -> PO: Find PO by ID
+activate PO
+PO -> DB: Query PO
+activate DB
+DB --> PO: PO data
+deactivate DB
+
+alt Status = Pending
+    note right of PO
+        Set status = Cancelled
+    end note
+
+    PO -> DB: Update status
+    activate DB
+    DB --> PO: Success
+    deactivate DB
+    PO --> Resource: Updated instance
+    deactivate PO
+
+    Resource -> Notif: Send notification to Supplier
+    activate Notif
+    Notif --> Resource: Sent
+    deactivate Notif
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: Tampilkan hasil\n"PO dibatalkan"
+    deactivate UI
+else Status != Pending
+    PO --> Resource: Cannot cancel
+    deactivate PO
+    Resource --> UI: Error response
+    deactivate Resource
+    UI --> Admin: Tampilkan error\n"PO tidak dapat dibatalkan"
+    deactivate UI
+end
+
+@enduml

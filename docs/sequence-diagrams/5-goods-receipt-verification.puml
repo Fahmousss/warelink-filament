@@ -1,0 +1,170 @@
+@startuml Goods Receipt Verification - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Memverifikasi & Menyelesaikan Penerimaan Barang (Admin Gudang)
+
+actor "Admin Gudang" as Admin
+participant "Filament UI" as UI
+participant "GR Resource" as Resource
+participant "GoodsReceipt\nModel" as GR
+participant "Product\nModel" as Product
+participant "PurchaseOrder\nModel" as PO
+participant "Shipment\nModel" as Shipment
+participant "Database" as DB
+participant "Notification" as Notif
+
+== Terima Notifikasi ==
+Notif -> Admin: Notifikasi:\n"Goods Receipt created (Pending)"
+
+== Lihat Goods Receipt ==
+Admin -> UI: Akses menu Goods Receipt
+activate UI
+UI -> Resource: Request GR list (status=Pending)
+activate Resource
+Resource -> DB: Query goods receipts where status=Pending
+activate DB
+DB --> Resource: GR data
+deactivate DB
+Resource --> UI: GR list
+deactivate Resource
+UI --> Admin: Tampilkan daftar GR (Pending)
+deactivate UI
+
+Admin -> UI: Pilih Goods Receipt
+activate UI
+UI -> Resource: Request GR details
+activate Resource
+Resource -> GR: Get GR with details
+activate GR
+GR -> DB: Query GR & dokumen POD
+activate DB
+DB --> GR: Complete data
+deactivate DB
+GR --> Resource: GR with full details
+deactivate GR
+Resource --> UI: GR detail & dokumen POD
+deactivate Resource
+UI --> Admin: Tampilkan detail GR & dokumen
+deactivate UI
+
+Admin -> Admin: Verifikasi data dengan dokumen POD
+
+alt Data Sesuai
+    == Verifikasi ==
+    Admin -> UI: Klik "Verifikasi Penerimaan"
+    activate UI
+    UI -> Resource: Request verify
+    activate Resource
+    Resource -> GR: Mark as Verified
+    activate GR
+    GR -> DB: Update status=Verified
+    activate DB
+    DB --> GR: Success
+    deactivate DB
+    GR --> Resource: Updated
+    deactivate GR
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: "GR Verified"
+    deactivate UI
+
+    == Selesaikan Penerimaan ==
+    Admin -> UI: Klik "Selesaikan Penerimaan"
+    activate UI
+    UI -> Resource: Confirm completion
+    activate Resource
+
+    note right of Resource
+        Database Transaction Start:
+        All operations below run atomically
+    end note
+
+    Resource -> Product: Update stock for each product
+    activate Product
+    Product -> DB: Increase stock quantity\n& log stock movement
+    activate DB
+    DB --> Product: Success
+    deactivate DB
+    Product --> Resource: Stock updated
+    deactivate Product
+
+    Resource -> PO: Update PO received quantities\n& status
+    activate PO
+    PO -> DB: Update quantities & status\n(Pending → Partial → Completed)
+    activate DB
+    DB --> PO: Success
+    deactivate DB
+    PO --> Resource: PO updated
+    deactivate PO
+
+    Resource -> Shipment: Mark as Processed
+    activate Shipment
+    Shipment -> DB: Update status=Processed
+    activate DB
+    DB --> Shipment: Success
+    deactivate DB
+    Shipment --> Resource: Shipment updated
+    deactivate Shipment
+
+    Resource -> GR: Mark as Completed
+    activate GR
+    GR -> DB: Update status=Completed
+    activate DB
+    DB --> GR: Success
+    deactivate DB
+    GR --> Resource: GR completed
+    deactivate GR
+
+    note right of Resource
+        Transaction Commit
+    end note
+
+    Resource -> Notif: Send notification to Accounting
+    activate Notif
+    Notif --> Resource: Sent
+    deactivate Notif
+
+    alt Has Rejected Products
+        Resource -> Notif: Send notification to Supplier\nabout rejections
+        activate Notif
+        Notif --> Resource: Sent
+        deactivate Notif
+    end
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: "Penerimaan selesai"
+    deactivate UI
+
+else Data Tidak Sesuai
+    Admin -> UI: Kembalikan ke Checker
+    activate UI
+    UI -> Resource: Return to checker with notes
+    activate Resource
+
+    Resource -> GR: Keep status=Pending\n& add issue notes
+    activate GR
+    GR -> DB: Update notes
+    activate DB
+    DB --> GR: Success
+    deactivate DB
+    GR --> Resource: Updated
+    deactivate GR
+
+    Resource -> Notif: Send notification to Checker
+    activate Notif
+    Notif --> Resource: Sent
+    deactivate Notif
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: "Issue reported"
+    deactivate UI
+end
+
+@enduml

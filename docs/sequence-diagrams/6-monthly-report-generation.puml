@@ -1,0 +1,172 @@
+@startuml Monthly Report Generation - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Membuat Laporan Bulanan (Accounting)
+
+actor "Accounting" as Accounting
+participant "Filament UI" as UI
+participant "Report\nPage" as Page
+participant "Report\nGenerator" as Generator
+participant "Database" as DB
+
+== Akses Laporan ==
+Accounting -> UI: Akses menu Laporan
+activate UI
+UI -> Page: Show report page
+activate Page
+Page --> UI: Report options
+deactivate Page
+UI --> Accounting: Tampilkan pilihan jenis laporan
+deactivate UI
+
+Accounting -> UI: Pilih periode (bulan/tahun)
+activate UI
+UI --> Accounting: Form filter periode
+deactivate UI
+
+== Laporan Purchase Order ==
+Accounting -> UI: Pilih "Laporan Purchase Order"
+activate UI
+UI -> Page: Request PO report
+activate Page
+Page -> Generator: Generate PO report\n(month, year)
+activate Generator
+
+note right of Generator
+    - Query PO data by period
+    - Calculate statistics
+    - Generate charts
+end note
+
+Generator -> DB: Query PO data
+activate DB
+DB --> Generator: PO data
+deactivate DB
+
+Generator -> Generator: Calculate metrics:\n- Total per status\n- Top suppliers\n- Trend analysis
+
+Generator --> Page: Report data + charts
+deactivate Generator
+Page --> UI: Render report
+deactivate Page
+UI --> Accounting: Tampilkan laporan PO
+deactivate UI
+
+== Laporan Penerimaan Barang ==
+Accounting -> UI: Pilih "Laporan Penerimaan Barang"
+activate UI
+UI -> Page: Request GR report
+activate Page
+Page -> Generator: Generate GR report\n(month, year)
+activate Generator
+
+note right of Generator
+    - Query GR data
+    - Calculate acceptance rate
+    - Supplier performance
+end note
+
+Generator -> DB: Query GR data
+activate DB
+DB --> Generator: GR data
+deactivate DB
+
+Generator -> Generator: Calculate metrics:\n- Acceptance rate\n- Supplier performance\n- Rejection analysis
+
+Generator --> Page: Report data + charts
+deactivate Generator
+Page --> UI: Render report
+deactivate Page
+UI --> Accounting: Tampilkan laporan GR
+deactivate UI
+
+== Laporan Stok Produk ==
+Accounting -> UI: Pilih "Laporan Stok Produk"
+activate UI
+UI -> Page: Request stock report
+activate Page
+Page -> Generator: Generate stock report
+activate Generator
+
+note right of Generator
+    - Query product data
+    - Calculate stock levels
+    - Identify reorder needs
+end note
+
+Generator -> DB: Query product & stock data
+activate DB
+DB --> Generator: Product data
+deactivate DB
+
+Generator -> Generator: Calculate:\n- Low/out stock products\n- Projected stock\n- Reorder suggestions
+
+Generator --> Page: Report data + charts
+deactivate Generator
+Page --> UI: Render report
+deactivate Page
+UI --> Accounting: Tampilkan laporan Stok
+deactivate UI
+
+== Laporan Keuangan ==
+Accounting -> UI: Pilih "Laporan Keuangan"
+activate UI
+UI -> Page: Request financial report
+activate Page
+Page -> Generator: Generate financial report\n(month, year)
+activate Generator
+
+note right of Generator
+    - Query PO financial data
+    - Calculate spending
+    - Outstanding amounts
+end note
+
+Generator -> DB: Query financial data
+activate DB
+DB --> Generator: PO & spending data
+deactivate DB
+
+Generator -> Generator: Calculate:\n- Total spending\n- Outstanding amounts\n- Spending trends
+
+Generator --> Page: Report data + charts
+deactivate Generator
+Page --> UI: Render report
+deactivate Page
+UI --> Accounting: Tampilkan laporan Keuangan
+deactivate UI
+
+== Export Laporan ==
+Accounting -> UI: Klik "Export"
+activate UI
+UI --> Accounting: Pilihan format (PDF/Excel/CSV)
+deactivate UI
+
+Accounting -> UI: Pilih format export
+activate UI
+UI -> Page: Request export
+activate Page
+Page -> Generator: Generate file\n(format)
+activate Generator
+
+alt Format PDF
+    Generator -> Generator: Generate PDF
+else Format Excel
+    Generator -> Generator: Generate Excel
+else Format CSV
+    Generator -> Generator: Generate CSV
+end
+
+Generator --> Page: File download
+deactivate Generator
+Page --> UI: Download response
+deactivate Page
+UI --> Accounting: Download laporan
+deactivate UI
+
+@enduml

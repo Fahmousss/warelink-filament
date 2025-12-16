@@ -1,0 +1,158 @@
+@startuml View Product - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Melihat Produk (Supplier)
+
+actor "Supplier" as Supplier
+participant "Filament UI" as UI
+participant "Product\nResource" as Resource
+participant "Product\nModel" as Product
+participant "Database" as DB
+
+== Lihat Daftar Produk ==
+Supplier -> UI: Akses menu Produk
+activate UI
+
+note right of UI
+    Filter otomatis:
+    Hanya tampilkan produk supplier sendiri
+end note
+
+UI -> Resource: Request product list
+activate Resource
+Resource -> DB: Query products by supplier_id
+activate DB
+DB --> Resource: Product data
+deactivate DB
+Resource --> UI: Filtered product list
+deactivate Resource
+UI --> Supplier: Tampilkan daftar produk
+deactivate UI
+
+== Filter/Cari Produk ==
+Supplier -> UI: Input kriteria filter:\n- Status stok\n- Status aktif\n- Keyword
+activate UI
+UI -> Resource: Request filtered list
+activate Resource
+Resource -> DB: Query with filters
+activate DB
+DB --> Resource: Filtered data
+deactivate DB
+Resource --> UI: Product list
+deactivate Resource
+UI --> Supplier: Tampilkan hasil filter
+deactivate UI
+
+== Lihat Detail Produk ==
+Supplier -> UI: Pilih produk
+activate UI
+UI -> Resource: Request product details
+activate Resource
+Resource -> Product: Get product with statistics
+activate Product
+
+note right of Product
+    Get complete information:
+    - Basic info & stock
+    - Statistics (ordered, received, rejected)
+    - Acceptance rate
+    - Projected stock
+    - Reorder status
+end note
+
+Product -> DB: Query product data\n& related transactions
+activate DB
+DB --> Product: Complete data
+deactivate DB
+Product --> Resource: Product with full details
+deactivate Product
+Resource --> UI: Product detail data
+deactivate Resource
+UI --> Supplier: Tampilkan detail lengkap produk
+deactivate UI
+
+== Lihat Riwayat Transaksi ==
+Supplier -> UI: Klik "Lihat Riwayat Transaksi"
+activate UI
+UI -> Resource: Request transaction history
+activate Resource
+Resource -> DB: Query PO, Shipment, GR\nrelated to product
+activate DB
+DB --> Resource: Transaction data
+deactivate DB
+Resource --> UI: Transaction history
+deactivate Resource
+UI --> Supplier: Tampilkan riwayat PO, Shipment, GR
+deactivate UI
+
+== Lihat Riwayat Stok ==
+Supplier -> UI: Klik "Lihat Riwayat Stok"
+activate UI
+UI -> Resource: Request stock movements
+activate Resource
+Resource -> DB: Query stock movement history
+activate DB
+DB --> Resource: Movement data
+deactivate DB
+Resource --> UI: Stock movement history
+deactivate Resource
+UI --> Supplier: Tampilkan riwayat pergerakan stok
+deactivate UI
+
+== Lihat Grafik Trend ==
+Supplier -> UI: Klik "Lihat Grafik Trend"
+activate UI
+UI -> Resource: Request trend charts
+activate Resource
+
+note right of Resource
+    Generate charts:
+    - Stock trend (6 months)
+    - Order trend
+    - Acceptance rate trend
+end note
+
+Resource -> DB: Query historical data
+activate DB
+DB --> Resource: Historical data
+deactivate DB
+
+Resource -> Resource: Generate charts
+
+Resource --> UI: Trend charts
+deactivate Resource
+UI --> Supplier: Tampilkan grafik trend
+deactivate UI
+
+== Export Data Produk ==
+Supplier -> UI: Klik "Export Data"
+activate UI
+UI --> Supplier: Pilihan format (Excel/CSV)
+deactivate UI
+
+Supplier -> UI: Pilih format
+activate UI
+UI -> Resource: Request export
+activate Resource
+Resource -> DB: Query selected products
+activate DB
+DB --> Resource: Product data
+deactivate DB
+
+alt Format Excel
+    Resource -> Resource: Generate Excel file
+else Format CSV
+    Resource -> Resource: Generate CSV file
+end
+
+Resource --> UI: File download
+deactivate Resource
+UI --> Supplier: Download data produk
+deactivate UI
+
+@enduml

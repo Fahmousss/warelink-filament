@@ -1,0 +1,192 @@
+@startuml Master Data Management - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Mengelola Master Data (Admin Gudang)
+
+actor "Admin Gudang" as Admin
+participant "Filament UI" as UI
+participant "Resource" as Resource
+participant "Model" as Model
+participant "Database" as DB
+
+== Manage User ==
+Admin -> UI: Akses menu Master Data\n(Pilih: Pengguna)
+activate UI
+UI -> Resource: Request user list
+activate Resource
+Resource -> Model: Get active users
+activate Model
+Model -> DB: Query users
+activate DB
+DB --> Model: Return data
+deactivate DB
+Model --> Resource: Collection<User>
+deactivate Model
+Resource --> UI: User list data
+deactivate Resource
+UI --> Admin: Tampilkan daftar user
+deactivate UI
+
+Admin -> UI: Pilih aksi CRUD\n(Create/Update)
+activate UI
+UI -> Resource: Show form
+activate Resource
+Resource --> UI: Render form
+deactivate Resource
+UI --> Admin: Tampilkan form
+deactivate UI
+
+Admin -> UI: Input/Update data pengguna
+activate UI
+UI -> Resource: Submit data
+activate Resource
+
+Resource -> Resource: Validasi data
+
+alt Validation Success
+    Resource -> Model: Create/Update user
+    activate Model
+    Model -> DB: Save to database
+    activate DB
+    DB --> Model: Success
+    deactivate DB
+    Model --> Resource: User instance
+    deactivate Model
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: Tampilkan hasil operasi
+    deactivate UI
+else Validation Failed
+    Resource --> UI: Validation errors
+    deactivate Resource
+    UI --> Admin: Tampilkan error
+    deactivate UI
+end
+
+== Manage Supplier ==
+Admin -> UI: Akses menu Master Data\n(Pilih: Supplier)
+activate UI
+UI -> Resource: Request supplier list
+activate Resource
+Resource -> Model: Get active suppliers
+activate Model
+Model -> DB: Query suppliers
+activate DB
+DB --> Model: Return data
+deactivate DB
+Model --> Resource: Collection<Supplier>
+deactivate Model
+Resource --> UI: Supplier list data
+deactivate Resource
+UI --> Admin: Tampilkan daftar supplier
+deactivate UI
+
+Admin -> UI: Buat supplier baru
+activate UI
+UI -> Resource: Show create form
+activate Resource
+Resource --> UI: Render form
+deactivate Resource
+UI --> Admin: Tampilkan form
+deactivate UI
+
+Admin -> UI: Input data supplier
+activate UI
+UI -> Resource: Submit data
+activate Resource
+
+Resource -> Resource: Validasi data
+
+alt Validation Success
+    Resource -> Model: Create supplier
+    activate Model
+
+    note right of Model
+        - Generate kode supplier otomatis
+        - Set status aktif
+    end note
+
+    Model -> DB: Save to database
+    activate DB
+    DB --> Model: Success
+    deactivate DB
+    Model --> Resource: Supplier instance
+    deactivate Model
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: Tampilkan hasil operasi
+    deactivate UI
+else Validation Failed
+    Resource --> UI: Validation errors
+    deactivate Resource
+    UI --> Admin: Tampilkan error
+    deactivate UI
+end
+
+== Manage Product ==
+Admin -> UI: Akses menu Master Data\n(Pilih: Produk)
+activate UI
+UI -> Resource: Request product list
+activate Resource
+Resource -> Model: Get active products
+activate Model
+Model -> DB: Query products with supplier
+activate DB
+DB --> Model: Return data
+deactivate DB
+Model --> Resource: Collection<Product>
+deactivate Model
+Resource --> UI: Product list data
+deactivate Resource
+UI --> Admin: Tampilkan daftar produk
+deactivate UI
+
+Admin -> UI: Buat/Edit produk
+activate UI
+UI -> Resource: Show form
+activate Resource
+Resource --> UI: Render form
+deactivate Resource
+UI --> Admin: Tampilkan form
+deactivate UI
+
+Admin -> UI: Input/Update data produk
+activate UI
+UI -> Resource: Submit data
+activate Resource
+
+Resource -> Resource: Validasi data
+
+alt Validation Success
+    Resource -> Model: Create/Update product
+    activate Model
+
+    note right of Model
+        - Generate kode produk (jika baru)
+        - Catat pergerakan stok (jika ada perubahan)
+        - Update stock quantity
+    end note
+
+    Model -> DB: Save to database
+    activate DB
+    DB --> Model: Success
+    deactivate DB
+    Model --> Resource: Product instance
+    deactivate Model
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Admin: Tampilkan hasil operasi
+    deactivate UI
+else Validation Failed
+    Resource --> UI: Validation errors
+    deactivate Resource
+    UI --> Admin: Tampilkan error
+    deactivate UI
+end
+
+@enduml

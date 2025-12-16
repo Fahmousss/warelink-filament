@@ -1,217 +1,98 @@
 @startuml Messaging
 
+skinparam defaultFontName Times New Roman
+skinparam activityFontName Times New Roman
+skinparam activityArrowFontName Times New Roman
+skinparam partitionFontName Times New Roman
+skinparam swimlane {
+  BorderColor #444444
+  TitleBackgroundColor #EEEEEE
+}
+skinparam activity {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  FontColor #000000
+}
+skinparam arrow {
+  Color #A80036
+  FontColor #000000
+}
+skinparam note {
+  BackgroundColor #FBFB77
+  BorderColor #A80036
+}
+
 title Activity Diagram - Mengirim Pesan (All Users)
 
 |User|
 start
-:Login ke sistem;
 :Akses menu Chat/Pesan;
 
 |System|
-if (Ada chat sebelumnya?) then (Ya)
-  :Tampilkan daftar chat/group;
+:Tampilkan daftar chat (jika ada);
 
-  |User|
-  :Pilih chat untuk dibuka;
+|User|
+:Pilih aksi;
+
+if (Aksi?) then (Buat Chat Baru)
+  :Pilih jenis chat;
+
+  if (Jenis chat?) then (Private)
+    :Pilih user tujuan;
+
+    |System|
+    :Validasi akses chat;
+    :Buat atau buka chat existing;
+
+    |User|
+    :Chat siap;
+
+  elseif (Jenis chat?) then (Group)
+    |User|
+    :Input nama group;
+    :Pilih anggota (min 2);
+
+    |System|
+    :Validasi dan buat group chat;
+    :Set admin group;
+    :Kirim notifikasi ke anggota;
+
+    |User|
+    :Chat siap;
+  endif
+
+elseif (Aksi?) then (Buka Chat)
+  :Pilih chat;
 
   |System|
   :Tampilkan riwayat pesan;
-else (Tidak)
-endif
+  :Mark pesan sebagai read;
 
-|User|
-if (Ingin membuat chat baru?) then (Ya)
-  :Klik "Buat Chat/Group Baru";
-
-  |System|
-  if (User dapat membuat chat?) then (Ya)
-    floating note right
-      Berdasarkan method canCreateChats()
-      di class User
-    end note
-
-    |User|
-    if (Jenis chat?) then (Private Chat)
-      :Pilih user tujuan\ndari daftar user;
-
-      |System|
-      if (User = Supplier?) then (Ya)
-        :Filter hanya menampilkan\nsupplier terkait;
-
-        floating note right
-          Supplier hanya bisa chat dengan:
-          - Admin Gudang
-          - Checker
-          - Accounting (jika ada akses)
-        end note
-      else (Admin/Checker/Accounting)
-        :Tampilkan semua user\nyang bisa diajak chat;
-      endif
-
-      |User|
-      :Pilih user;
-
-      |System|
-      :Cek apakah chat sudah ada;
-
-      if (Chat sudah ada?) then (Ya)
-        :Buka chat yang sudah ada;
-      else (Tidak)
-        :Buat chat baru;
-        :Set participants\n(user login + user dipilih);
-      endif
-    elseif (Jenis chat?) then (Group Chat)
-      |System|
-      if (User dapat membuat group?) then (Ya)
-        floating note right
-          Berdasarkan property
-          canCreateGroups di User
-        end note
-
-        |User|
-        :Input nama group;
-        :Pilih anggota group;
-        :Pilih minimal 2 user;
-
-        |System|
-        :Validasi pilihan anggota;
-
-        if (Valid?) then (Ya)
-          :Buat group chat baru;
-          :Set admin group = user login;
-          :Tambahkan semua anggota;
-          :Kirim notifikasi ke semua anggota;
-        else (Tidak)
-          |User|
-          :Tampilkan error\n"Minimal 2 anggota";
-          stop
-        endif
-      else (Tidak)
-        |User|
-        :Tampilkan error\n"Tidak memiliki akses membuat group";
-        stop
-      endif
-    endif
-  else (Tidak)
-    |User|
-    :Tampilkan error\n"Tidak memiliki akses membuat chat";
-    stop
-  endif
-else (Tidak)
-endif
-
-|User|
-:Tulis pesan;
-
-if (Jenis pesan?) then (Teks)
-  :Ketik pesan teks;
-elseif (Jenis pesan?) then (File)
-  :Pilih file dari device;
-  :Upload file;
-
-  floating note right
-    File bisa berupa:
-    - Dokumen
-    - Gambar
-    - PDF
-    - dll
-  end note
-
-  |System|
-  :Tunggu upload selesai;
-elseif (Jenis pesan?) then (Teks + File)
   |User|
-  :Ketik pesan teks;
-  :Attach file;
+  :Chat siap;
 
-  |System|
-  :Upload file;
+else (Batal)
+  :Kembali ke daftar chat;
+  stop
 endif
 
-|User|
-:Klik "Kirim";
+:Tulis dan kirim pesan;
 
 |System|
 :Validasi pesan;
+:Simpan pesan ke database;
+:Broadcast via Reverb/WebSocket;
+:Kirim notifikasi ke recipient;
 
-if (Pesan valid?) then (Ya)
-  :Simpan pesan ke database;
-  :Set timestamp;
-  :Set sender = user login;
-
-  if (Chat type?) then (Private)
-    :Kirim pesan ke user tujuan;
-  else (Group)
-    :Kirim pesan ke semua anggota group;
-  endif
-
-  :Broadcast pesan via Reverb/WebSocket;
-
-  floating note right
-    Menggunakan Laravel Reverb
-    untuk real-time messaging
-  end note
-
-  :Kirim notifikasi push\nke recipient yang offline;
-
-  |User|
-  :Tampilkan pesan terkirim\ndengan status "sent";
-
-  |Recipient|
-  :Terima pesan secara real-time;
-  :Tampilkan notifikasi pesan baru;
-
-  if (Recipient membuka chat?) then (Ya)
-    :Tampilkan pesan di chat window;
-    :Mark pesan sebagai "read";
-
-    |System|
-    :Update status pesan = "read";
-    :Kirim read receipt ke sender;
-
-    |User|
-    :Update status pesan menjadi "read"\n(centang biru);
-  else (Tidak)
-    |Recipient|
-    :Increment unread counter;
-  endif
-else (Tidak)
-  |User|
-  :Tampilkan error\n"Gagal mengirim pesan";
-  stop
-endif
+note right
+  Recipient akan menerima pesan:
+  - Real-time jika chat terbuka
+  - Notifikasi jika chat tertutup
+  - Increment unread counter
+end note
 
 |User|
-if (User tetap di chat?) then (Ya)
-  |System|
-  :Monitor pesan masuk real-time;
-
-  if (Ada pesan baru masuk?) then (Ya)
-    :Tampilkan pesan baru\nsecara real-time;
-    :Play notification sound;
-    :Auto-scroll ke pesan terbaru;
-  else (Tidak)
-  endif
-else (Tidak)
-  |User|
-  :Keluar dari chat;
-  stop
-endif
-
-floating note right
-  Messaging menggunakan:
-  - Wirechat package
-  - Laravel Reverb untuk WebSocket
-  - Broadcasting untuk real-time
-
-  Fitur:
-  - Private chat 1-on-1
-  - Group chat
-  - File attachment
-  - Read receipts
-  - Real-time updates
-  - Push notifications
-end note
+:Tampilkan pesan terkirim;
 
 stop
 

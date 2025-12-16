@@ -1,156 +1,98 @@
 @startuml Delivery Order Management
 
+skinparam defaultFontName Times New Roman
+skinparam activityFontName Times New Roman
+skinparam activityArrowFontName Times New Roman
+skinparam partitionFontName Times New Roman
+skinparam swimlane {
+  BorderColor #444444
+  TitleBackgroundColor #EEEEEE
+}
+skinparam activity {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  FontColor #000000
+}
+skinparam arrow {
+  Color #A80036
+  FontColor #000000
+}
+skinparam note {
+  BackgroundColor #FBFB77
+  BorderColor #A80036
+}
+
 title Activity Diagram - Mengelola Delivery Order (Supplier)
 
 |Supplier|
 start
-:Login ke sistem;
 :Akses menu Purchase Order;
 
 |System|
-:Lihat daftar PO yang ditujukan\nke supplier sendiri;
-:Filter PO berdasarkan status\n(Pending/Partial);
+:Tampilkan daftar PO supplier;
 
 |Supplier|
-:Pilih Purchase Order;
+:Pilih aksi;
 
-|System|
-:Lihat detail PO:
-- Nomor PO
-- Tanggal order
-- Estimasi pengiriman
-- Detail produk yang dipesan
-- Jumlah per produk
-- Catatan;
-
-|Supplier|
-if (Ingin membuat Delivery Order?) then (Ya)
-  :Klik tombol "Buat Delivery Order";
+if (Aksi?) then (Buat DO)
+  :Pilih Purchase Order;
+  :Input detail DO;
+  :Input detail produk yang dikirim;
+  :Upload dokumen DO;
 
   |System|
-  :Generate nomor shipment otomatis;
-
-  |Supplier|
-  :Input nomor Delivery Order;
-  :Input tanggal pengiriman;
-  :Input estimasi tanggal kedatangan;
-  :Upload scan dokumen DO;
-  :Tambah detail produk yang akan dikirim;
-
-  repeat
-    :Pilih produk dari PO;
-    :Input jumlah yang dikirim;
-
-    floating note right
-      Jumlah yang dikirim dapat
-      berbeda dengan jumlah PO
-      (partial shipment allowed)
-    end note
-
-    |System|
-    if (Jumlah valid?) then (Ya)
-      :Tambahkan ke detail shipment;
-    else (Tidak)
-      |Supplier|
-      :Tampilkan error\n"Jumlah melebihi yang dipesan";
-      stop
-    endif
-  repeat while (Ada produk lain?) is (Ya)
-  ->Tidak;
-
-  |Supplier|
-  :Input catatan pengiriman (opsional);
-
-  |System|
-  :Set status shipment = Draft;
+  :Generate nomor shipment;
+  :Validasi jumlah produk;
+  :Set status = Draft;
   :Simpan Shipment;
 
   |Supplier|
-  :Tampilkan notifikasi sukses;
+  :Tampilkan hasil;
 
-elseif (Ingin melihat shipment?) then (Ya)
-  :Klik tab "Delivery Orders";
+elseif (Aksi?) then (Edit DO)
+  :Pilih Shipment;
 
   |System|
-  :Tampilkan daftar shipment\nuntuk supplier;
-  :Filter berdasarkan status\n(Draft/Shipped/Arrived/Processed);
+  :Periksa status Shipment;
+
+  if (Status = Draft?) then (Ya)
+    |Supplier|
+    :Update data DO;
+    :Update detail produk;
+
+    |System|
+    :Validasi dan simpan;
+
+    |Supplier|
+    :Tampilkan hasil;
+  else (Tidak)
+    |Supplier|
+    :Tampilkan error "DO tidak dapat diubah";
+  endif
+
+elseif (Aksi?) then (Lihat DO)
+  |System|
+  :Tampilkan daftar Shipment;
+  :Tampilkan detail DO (jika dipilih);
 
   |Supplier|
-  :Pilih shipment untuk detail;
+  :Lihat detail;
 
-  |System|
-  :Tampilkan informasi shipment:
-  - Nomor shipment
-  - Nomor DO
-  - Purchase Order terkait
-  - Tanggal pengiriman
-  - Estimasi kedatangan
-  - Status
-  - Detail produk
-  - Dokumen DO scan;
-
-else (Edit Shipment)
-  :Pilih shipment yang akan diedit;
-
-  |System|
-  if (Status shipment?) then (Draft)
-    |Supplier|
-    :Update data shipment\n(nomor DO, tanggal, estimasi, dokumen);
-
-    if (Edit detail produk?) then (Ya)
-      repeat
-        :Update jumlah yang dikirim;
-
-        |System|
-        if (Jumlah valid?) then (Ya)
-          :Simpan perubahan detail;
-        else (Tidak)
-          |Supplier|
-          :Tampilkan error validasi;
-          stop
-        endif
-      repeat while (Ada perubahan lain?) is (Ya)
-      ->Tidak;
-    else (Tidak)
-    endif
-
-    |System|
-    :Simpan perubahan;
-
-    |Supplier|
-    :Tampilkan notifikasi sukses;
-  else (Shipped/Arrived/Processed)
-    |Supplier|
-    :Tampilkan pesan error\n"Shipment tidak dapat diubah";
-    stop
-  endif
-endif
-
-if (Siap mengirim barang?) then (Ya)
-  :Pilih shipment dengan status Draft;
+elseif (Aksi?) then (Kirim Barang)
+  :Pilih Shipment (Draft);
   :Konfirmasi pengiriman;
 
-  if (Konfirmasi?) then (Ya)
-    |System|
-    :Ubah status shipment = Shipped;
-    :Simpan perubahan;
-    :Kirim notifikasi ke Admin Gudang\ndan Checker;
+  |System|
+  :Set status = Shipped;
+  :Simpan perubahan;
+  :Kirim notifikasi ke Admin Gudang dan Checker;
 
-    |Supplier|
-    :Tampilkan notifikasi sukses\n"Barang telah dikirim";
-  else (Tidak)
-    stop
-  endif
-else (Tidak)
+  |Supplier|
+  :Tampilkan hasil;
+
+else (Batal)
+  :Kembali ke menu;
 endif
-
-floating note right
-  Status Shipment:
-  - Draft: Shipment dibuat tapi belum dikirim
-  - Shipped: Barang sudah dikirim supplier
-  - Arrived: Barang sudah tiba di gudang
-  - Processed: Penerimaan barang selesai
-end note
 
 stop
 

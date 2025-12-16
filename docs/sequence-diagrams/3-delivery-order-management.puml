@@ -1,0 +1,169 @@
+@startuml Delivery Order Management - Sequence Diagram
+
+skinparam defaultFontName Times New Roman
+skinparam sequenceMessageFontName Times New Roman
+skinparam sequenceActorFontName Times New Roman
+skinparam sequenceBoxFontName Times New Roman
+skinparam sequenceParticipantFontName Times New Roman
+
+title Sequence Diagram - Mengelola Delivery Order (Supplier)
+
+actor "Supplier" as Supplier
+participant "Filament UI" as UI
+participant "Shipment\nResource" as Resource
+participant "Shipment\nModel" as Shipment
+participant "Database" as DB
+participant "Notification" as Notif
+
+== Lihat Purchase Order ==
+Supplier -> UI: Akses menu Purchase Order
+activate UI
+
+note right of UI
+    Filter otomatis:
+    Hanya tampilkan PO supplier sendiri
+end note
+
+UI -> Resource: Request PO list
+activate Resource
+Resource -> DB: Query PO by supplier_id
+activate DB
+DB --> Resource: PO data
+deactivate DB
+Resource --> UI: Filtered PO list
+deactivate Resource
+UI --> Supplier: Tampilkan daftar PO supplier
+deactivate UI
+
+== Buat DO ==
+Supplier -> UI: Pilih Purchase Order\nKlik "Buat DO"
+activate UI
+UI -> Resource: Show DO form
+activate Resource
+Resource --> UI: Form DO dengan produk dari PO
+deactivate Resource
+UI --> Supplier: Tampilkan form
+deactivate UI
+
+Supplier -> UI: Input detail DO\n- Nomor DO\n- Tanggal pengiriman\n- Estimasi kedatangan\n- Upload dokumen DO\n- Input produk & jumlah
+activate UI
+UI -> Resource: Submit DO data
+activate Resource
+
+note right of Resource
+    - Generate nomor shipment
+    - Validasi jumlah produk
+    - Set status = Draft
+end note
+
+Resource -> Shipment: Create shipment with details
+activate Shipment
+Shipment -> DB: Save shipment & details
+activate DB
+DB --> Shipment: Success
+deactivate DB
+Shipment --> Resource: Shipment instance
+deactivate Shipment
+
+Resource --> UI: Success response
+deactivate Resource
+UI --> Supplier: Tampilkan hasil
+deactivate UI
+
+== Edit DO ==
+Supplier -> UI: Pilih Shipment\nKlik Edit
+activate UI
+UI -> Resource: Request edit form
+activate Resource
+Resource -> Shipment: Find shipment by ID
+activate Shipment
+Shipment -> DB: Query shipment
+activate DB
+DB --> Shipment: Shipment data
+deactivate DB
+
+alt Status = Draft
+    Shipment --> Resource: Shipment instance
+    deactivate Shipment
+    Resource --> UI: Edit form with data
+    deactivate Resource
+    UI --> Supplier: Tampilkan form edit
+    deactivate UI
+
+    Supplier -> UI: Update data DO
+    activate UI
+    UI -> Resource: Submit updated data
+    activate Resource
+
+    note right of Resource
+        - Update DO data
+        - Update detail produk
+        - Validasi dan simpan
+    end note
+
+    Resource -> Shipment: Update shipment
+    activate Shipment
+    Shipment -> DB: Save changes
+    activate DB
+    DB --> Shipment: Success
+    deactivate DB
+    Shipment --> Resource: Updated instance
+    deactivate Shipment
+
+    Resource --> UI: Success response
+    deactivate Resource
+    UI --> Supplier: Tampilkan hasil
+    deactivate UI
+else Status != Draft
+    Shipment --> Resource: Not editable
+    deactivate Shipment
+    Resource --> UI: Error response
+    deactivate Resource
+    UI --> Supplier: Tampilkan error\n"DO tidak dapat diubah"
+    deactivate UI
+end
+
+== Lihat DO ==
+Supplier -> UI: Akses menu Shipment
+activate UI
+UI -> Resource: Request shipment list
+activate Resource
+Resource -> DB: Query shipments by supplier
+activate DB
+DB --> Resource: Shipment data
+deactivate DB
+Resource --> UI: Shipment list
+deactivate Resource
+UI --> Supplier: Tampilkan daftar DO
+deactivate UI
+
+== Kirim Barang ==
+Supplier -> UI: Pilih Shipment (Draft)\nKlik "Kirim Barang"
+activate UI
+UI -> Resource: Request ship action
+activate Resource
+Resource -> Shipment: Update status to Shipped
+activate Shipment
+
+note right of Shipment
+    Set status = Shipped
+end note
+
+Shipment -> DB: Update status
+activate DB
+DB --> Shipment: Success
+deactivate DB
+Shipment --> Resource: Updated instance
+deactivate Shipment
+
+Resource -> Notif: Send notification to\nAdmin Gudang & Checker
+activate Notif
+Notif --> Resource: Sent
+deactivate Notif
+
+Resource --> UI: Success response
+deactivate Resource
+UI --> Supplier: Tampilkan hasil\n"Barang dikirim"
+deactivate UI
+
+@enduml
