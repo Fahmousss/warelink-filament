@@ -142,7 +142,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Wirechat
      */
     public function canCreateGroups(): bool
     {
-        return true;
+        return false;
     }
 
     /**

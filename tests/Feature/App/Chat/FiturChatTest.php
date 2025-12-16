@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Filament\App\Pages\Chats;
+// use App\Filament\App\Pages\Chats;
 use App\Models\Supplier;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -29,13 +29,14 @@ describe('Fitur Chat', function () {
         // Autentikasi sebagai test user
         actingAs($this->user);
 
-        livewire(Chats::class)
-            ->assertOk();
+        // Akses halaman chat
+        $response = $this->get('/chats');
+        $response->assertStatus(200);
     });
 
     test('memerlukan autentikasi untuk mengakses halaman chat', function () {
         // Test tanpa autentikasi
-        $response = $this->get(Chats::getUrl());
+        $response = $this->get('/chats');
         $response->assertRedirect('/login');
     });
 
@@ -58,7 +59,7 @@ describe('Fitur Chat', function () {
         $this->actingAs($this->user);
 
         // Test bahwa chat panel dapat diakses
-        $response = $this->get('/app-chats');
+        $response = $this->get('/chats');
         $response->assertSuccessful();
     });
 });

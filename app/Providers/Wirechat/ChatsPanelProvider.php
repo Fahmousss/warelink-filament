@@ -15,7 +15,7 @@ class ChatsPanelProvider extends PanelProvider
     {
         return $panel
             ->id('chats')
-            ->path('app-chats')
+            ->path('chats')
             ->middleware(['web', 'auth'])
             ->emojiPicker(position: EmojiPickerPosition::Docked)
             ->webPushNotifications()

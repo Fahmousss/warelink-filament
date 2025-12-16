@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Auth\EditProfile;
-use App\Filament\App\Pages\Chats;
 use App\Filament\App\Pages\Dashboard as PagesDashboard;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -23,7 +22,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
@@ -72,7 +70,7 @@ class AppPanelProvider extends PanelProvider
                     ->visible(fn (): bool => auth()->user()->canAccessPanel(Filament::getPanel('admin'))),
                 Action::make('chats')
                     ->label('Messages')
-                    ->url(fn (): string => Chats::getUrl())
+                    ->url(fn (): string => '/chats')
                     ->icon(Heroicon::OutlinedChatBubbleOvalLeft)
                     ->visible(fn (): bool => auth()->user()->isAdmin() || auth()->user()->isChecker()),
             ])
@@ -81,8 +79,6 @@ class AppPanelProvider extends PanelProvider
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn () => view('filament.app.auth.login-form-before'),
             )
-            ->renderHook(PanelsRenderHook::HEAD_END, fn () => Blade::render('@wirechatStyles'))
-            ->renderHook(PanelsRenderHook::BODY_END, fn () => Blade::render('@wirechatAssets'))
             ->brandLogo(fn () => view('filament.app.logo'))
             ->darkModeBrandLogo(fn () => view('filament.app.dark-logo'))
             ->sidebarCollapsibleOnDesktop()
